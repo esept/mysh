@@ -1,5 +1,10 @@
 # Cahier de Spécifications Techniques pour mysh
 
+INTERESTING
+    - <https://github.com/hungys/mysh>
+    - <https://github.com/Swoorup/mysh>
+    - <https://github.com/Swoorup/mysh>
+
 ## Phase 1: Lancement de Commandes
 
 | Tâche               | Étapes Clés                                  | Axé sur...                               | Ressources Utiles                 |
@@ -73,5 +78,3 @@
 |---------------------|-------------------------------------------|---------------------------------------|-----------------------------------|
 | Préparation du Projet | - Préparer le projet conformément aux spécifications. | - Préparation pour la livraison.  | - Organisation du projet.    |
 | Livraison du Projet  | - Soumettre le projet par email avec le README. | - Remise du projet.              | - Communication par email.   |
-
-N'oubliez pas de respecter les délais de
