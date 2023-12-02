@@ -1,0 +1,55 @@
+#define FAILEDEXEC 127
+#define ALLCMD 4096
+#define ONECMDPARA 1024
+#define ERR -1
+
+#define fatalsyserror(x) syserror(x),exit(x)
+#define syserror(x) perror(errormsg[x])
+#define ROUGE(m) "\033[01;31m"m"\033[0m"
+#define VERT(m) "\033[01;32m"m"\033[0m"
+
+char *errormsg[] = {
+		"No error", // 0
+		ROUGE("Impossible to fork process"), //1
+		ROUGE("Exec failed") // 2
+};
+
+int main() {
+	char lgcmd[ALLCMD], *tabcmd[ONECMDPARA], *s, **ps;
+	pid_t p;
+	int i, status;
+
+	for (;;) {
+		putchar('> ');
+		fgets(lgcmd, ALLCMD - 1, stdin);
+		for (s = lgcmd; isspace(*s); s++) {
+			tabcmd[i] = s;
+			while (!isspace(*s)) s++;
+			*s++ = '\0';
+			while (isspace(*s)) s++;
+		}
+		if (i) {
+			tabcmd[i] = NULL;
+			if ((p = fork()) == ERR) fatalsyserror(1);
+			if (p) {
+				wait(&status);
+				if (WIFEXITED(status)) {
+					if ((status = WEXITSTATUS(status)) != FAILEDEXEC) {
+						printf(VERT("exit status of ["));
+						for (ps = tabcmd; *ps; ps++) {
+							printf("%s", *ps);
+						}
+						printf(VERT("\b] = %d \n", status));
+					} else {
+						puts(ROUGE("ABnormal exit"));
+					}
+				} else {
+					execvp(*tabcmd, tabcmd);
+					syserror(2);
+					exit(FAILEDEXEC);
+				}
+			}
+		}
+	}
+	exit(0);
+}

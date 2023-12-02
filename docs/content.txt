@@ -1,0 +1,367 @@
+<<../EDU-1S-C-project-myshell/src/exec.c>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#include "../include/exec.h"
+#include "../include/main.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+int exec_cmd(char * cmd[]){
+	int status;
+	pid_t pid;
+	pid = fork();
+	if(pid == -1) getError("fork");
+	else if(pid == 0){
+		// child
+		if (execvp(cmd[0],cmd) == ERR ) getError("exec");
+	} else{
+		waitpid(pid,&status,0);
+		return WEXITSTATUS(status);
+	}
+	getError("exec");
+}
+int command_cd(char *path){
+	if (path == NULL){
+		path = getenv("HOME");
+	}
+	if (chdir(path) != 0) getError("chdir");
+	return 1;
+}
+
+
+
+<<../EDU-1S-C-project-myshell/src/prepro_input.c>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "../include/prepro_input.h"
+#include "../include/main.h"
+#include "../include/exec.h"
+#include "../include/myls.h"
+/**
+void preprocess(char *input,int length){
+	if (length > 0 && input[length - 1] == '\n'){
+		input[length - 1] = '\0';
+	}
+	char *rest_line = input;
+	char * cmd_seg;
+	split_semicolon(input);
+//	while ((cmd_seg = strtok_r(rest_line,";",&rest_line))){
+//
+//		char *tabcmd[SIZE],*token,*rest_cmd = cmd_seg;
+//		int i = 0;
+//		while ((token = strtok_r(rest_cmd," ",&rest_cmd)) != NULL && i < SIZE){
+//			tabcmd[i++] = token;
+//		}
+//		tabcmd[i] = NULL;
+//		if (tabcmd[0] != NULL){
+//			if (strcmp(tabcmd[0],"cd") == 0){
+//				change_dict(tabcmd[1]);
+//				continue;
+//			} else if(strcmp(tabcmd[0],"exit") == 0){
+//				exit(EXIT_SUCCESS);
+//			}
+//		}
+//		exec_cmd(tabcmd);
+//	}
+}
+void split_space(char *cmd,char *args[]){
+	int i = 0;
+	char *token;
+	while ((token = strtok_r(cmd," ",&cmd)) != NULL && i < SIZE){
+		args[i++] = token;
+	}
+	args[i] = NULL;
+}
+void split_semicolon(char *input){
+	char *rest_line = input;
+	char *cmd_seg;
+	while((cmd_seg = strtok_r(rest_line,";",&rest_line))){
+		split_logop(cmd_seg);
+	}
+}
+void split_logop(char *input){
+	char *rest_line = input;
+	char *cmd_seg;
+	int last_status = 0;
+	int exec_status = 1;
+	while ((cmd_seg = strtok_r(rest_line,"&&",&rest_line))){
+		char *tabcmd[SIZE];
+		split_space(rest_line,tabcmd);
+		if ((strstr(cmd_seg,"&&") != NULL && last_status == 0) ||
+				(strstr(cmd_seg,"||") != NULL && last_status != 0) ||
+				(strstr(cmd_seg,"&&") != NULL && strstr(cmd_seg,"||") == NULL )){
+			if (strcmp(tabcmd[0],"cd") == 0){
+				last_status = change_dict(tabcmd[1]);
+				continue;
+			} else if(strcmp(tabcmd[0],"exit")){
+				exit(EXIT_SUCCESS);
+			}else{
+				last_status = exec_cmd(tabcmd);
+				exec_status = 1;
+			}
+		} else{
+			exec_status = 0;
+		}
+	}
+}
+ **/
+void preprocess(char *input, int length) {
+	if (length > 0 && input[length - 1] == '\n') {
+		input[length - 1] = '\0';
+	}
+	char *rest_line = input;
+	char *cmd_seg;
+	while ((cmd_seg = strtok_r(rest_line, ";", &rest_line))) {
+		char *tabcmd[SIZE], *token, *rest_cmd = cmd_seg;
+		int i = 0;
+		while ((token = strtok_r(rest_cmd, " ", &rest_cmd)) != NULL && i < SIZE) {
+			tabcmd[i++] = token;
+		}
+		tabcmd[i] = NULL;
+		if (tabcmd[0] != NULL) {
+			if (strcmp(tabcmd[0], "cd") == 0) {
+				command_cd(tabcmd[1]);
+				continue;
+			} else if (strcmp(tabcmd[0],"myls") == 0){
+				command_myls(tabcmd,i);
+			}
+			else if (strcmp(tabcmd[0], "exit") == 0) {
+				exit(EXIT_SUCCESS);
+			}
+		}
+		exec_cmd(tabcmd);
+	}
+}
+void split_space(char *cmd, char *args[]) {
+	int i = 0;
+	char *token;
+	while ((token = strtok_r(cmd, " ", &cmd)) != NULL && i < SIZE) {
+		args[i++] = token;
+	}
+	args[i] = NULL;
+}
+void split_semicolon(char *input) {
+	char *rest_line = input;
+	char *cmd_seg;
+	while ((cmd_seg = strtok_r(rest_line, ";", &rest_line))) {
+		char *tabcmd[SIZE];
+		split_space(cmd_seg, tabcmd);
+		if (strcmp(tabcmd[0], "cd") == 0) {
+			command_cd(tabcmd[1]);
+			continue;
+		} else if (strcmp(tabcmd[0], "exit") == 0) {
+			exit(EXIT_SUCCESS);
+		}
+		exec_cmd(tabcmd);
+	}
+}
+
+
+<<../EDU-1S-C-project-myshell/src/main.c>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include "../include/prepro_input.h"
+#include "../include/main.h"
+int main() {
+	char thiscmd[CMDLEN];
+	char cwd[SIZE];
+	for (;;) {
+		if (getcwd(cwd, sizeof(cwd)) == NULL) getError("getcwd");
+		printf("%s -> ",cwd);
+//		printf("%s -> ", cwd);
+		if (fgets(thiscmd, CMDLEN - 1, stdin) == NULL) {
+			perror("fgets: None input");
+			continue;
+		}
+		size_t len = strlen(thiscmd);
+		preprocess(thiscmd, len);
+		continue;
+	}
+}
+
+
+
+<<../EDU-1S-C-project-myshell/src/myls.c>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#include "../include/myls.h"
+#include "../include/main.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
+void command_myls(char *path[],int length){
+	int all = 0,Rec = 0,i;
+//	for(i=0;i<length;i++){
+//		printf("%s\n",path[i]);
+//	}
+	if (length == 1){
+		list_files("./",all,Rec);
+	}else	{
+	}
+}
+void get_stat(char *file_path,int is_all,int rec) {
+	int rt_stat;
+	struct stat mystat;
+	rt_stat = lstat(file_path, &mystat);
+	if (rt_stat < 0){
+		printf("%s",file_path);
+		perror("lstat");
+		exit(EXIT_FAILURE);
+	}
+	char filemod[11];
+	mode_t mod = (&mystat)->st_mode;
+	if (rec == 1 && S_ISDIR(mod)){
+		char newpath[strlen(file_path)+2];
+		strcpy(newpath,file_path);
+		strcat(newpath,"/");
+//		strcat(newpath,"\0");
+		printf("newpath = %s",newpath);
+		list_files(newpath,is_all,rec);
+	}
+	filemod[0] = S_ISDIR(mod) ? 'd':'-';
+	filemod[1] = (mod & S_IRUSR) ? 'r' : '-';
+	filemod[2] = (mod & S_IWUSR) ? 'w' : '-';
+	filemod[3] = (mod & S_IXUSR) ? 'x' : '-';
+	filemod[4] = (mod & S_IRGRP) ? 'r' : '-';
+	filemod[5] = (mod & S_IWGRP) ? 'w' : '-';
+	filemod[6] = (mod & S_IXGRP) ? 'x' : '-';
+	filemod[7] = (mod & S_IROTH) ? 'r' : '-';
+	filemod[8] = (mod & S_IWOTH) ? 'w' : '-';
+	filemod[9] = (mod & S_IXGRP) ? 'x' : '-';
+	filemod[10] = '\0';
+//	if (rt_stat == -1) {
+//		perror("lstat");
+//	}
+	printf("%s",filemod);
+	struct passwd *pw = getpwuid((&mystat) -> st_uid);
+	struct group *gr = getgrgid((&mystat) -> st_gid);
+	char datestring[256];
+	struct tm *tm;
+	tm = localtime(&(&mystat) -> st_mtime);
+	// strftime(datestring,sizeof(datestring),"%b %d %H:%M",tm);
+	strftime(datestring, sizeof(datestring), "%b %d %H:%M", tm);
+	printf(" %lu \t%s \t%s \t%lld \t%s", (unsigned long)(&mystat)->st_nlink, pw->pw_name, gr->gr_name, (long long)(&mystat)->st_size, datestring);
+}
+void list_files(char *the_path,int is_all,int Rec) {
+	DIR *mydir;
+	mydir = opendir(the_path);
+	if (mydir == NULL) {
+		perror("opendir");
+		exit(EXIT_FAILURE);
+	}
+	struct dirent *files;
+	for (;;) {
+		files = readdir(mydir);
+		if (files == NULL) {
+			break;
+		}
+		// -a 选项
+		if (is_all == 0){
+			if (strcmp(files->d_name, ".") == 0 || strcmp(files->d_name, "..") == 0 || files->d_name[0] == '.') {
+				continue;
+			}
+		}
+		char s[strlen(the_path) + strlen(files->d_name) + 1];
+		strcpy(s, the_path);
+		strcat(s,files->d_name);
+		get_stat(s,is_all,Rec);
+		printf("\t%s", files->d_name);
+		printf("\n");
+	}
+	if (closedir(mydir) == -1) {
+		perror("closedir");
+	}
+	exit(EXIT_SUCCESS);
+}
+int test_search(char * options){
+	char * target[4] = {"-R","-a","-aR","-Ra"};
+	int res;
+	int num = -1;
+	for (int i = 0;i < 4;i++){
+		res = strcmp(options,target[i]);
+		if (res == 0){
+			num = i;
+			break;
+		}
+	}
+	return num;
+}
+
+
+
+<<../EDU-1S-C-project-myshell/include/main.h>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_
+#define EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_
+#define getError(x) perror(x),exit(EXIT_FAILURE)
+#define ERR -1
+#define CMDLEN 4096
+#define SIZE 1024
+#define ROUGE(m) "\033[01;31m"m"\033[0m"
+#define VERT(m) "\033[01;32m"m"\033[0m"
+#endif //EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_
+
+
+
+<<../EDU-1S-C-project-myshell/include/myls.h>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_MYSH_H_
+#define EDU_1S_C_PROJECT_MYSHELL_SRC_MYSH_H_
+void get_stat(char *file_path,int is_all,int rec);
+void command_myls(char *path[],int length);
+void list_files(char *the_path,int is_all,int Rec);
+int test_search(char * options);
+#endif //EDU_1S_C_PROJECT_MYSHELL_SRC_MYSH_H_
+
+
+
+<<../EDU-1S-C-project-myshell/include/exec.h>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_EXEC_H_
+#define EDU_1S_C_PROJECT_MYSHELL_SRC_EXEC_H_
+int exec_cmd(char *cmd[]);
+int command_cd(char *path);
+#endif //EDU_1S_C_PROJECT_MYSHELL_SRC_EXEC_H_
+
+
+
+<<../EDU-1S-C-project-myshell/include/prepro_input.h>>
+//
+// Created by XuZY on 2023/11/25.
+//
+#ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
+#define EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
+void preprocess(char *input,int length);
+void split_space(char *cmd,char *args[]);
+void split_semicolon(char *input);
+void split_logop(char *input);
+#endif //EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
+
+
+
