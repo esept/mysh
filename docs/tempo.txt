@@ -1,0 +1,72 @@
+void myls_command(char *args[], int arg_count) {
+	int is_all = 0, is_recursive = 0;
+	char *path = "./"; // 默认路径
+
+	for (int i = 1; i < arg_count; i++) {
+		if (is_option(args[i], "-a")) {
+			is_all = 1;
+		} else if (is_option(args[i], "-R")) {
+			is_recursive = 1;
+		} else {
+			path = args[i]; // 假设是路径
+		}
+	}
+
+	list_directory(path, is_all, is_recursive);
+}
+
+int is_option(char *arg, char *option) {
+	return strcmp(arg, option) == 0;
+}
+
+void list_directory(char *path, int is_all, int is_recursive) {
+	DIR *dir = opendir(path);
+	if (!dir) {
+		perror("opendir");
+		exit(EXIT_FAILURE);
+	}
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL) {
+		// 跳过隐藏文件，除非指定了 -a 选项
+		if (!is_all && entry->d_name[0] == '.') {
+			continue;
+		}
+
+		char full_path[1024];
+		snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name);
+
+		print_file_stat(full_path);
+
+		// 如果是目录且指定了 -R 选项，递归调用
+		if (is_recursive && entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+			list_directory(full_path, is_all, is_recursive);
+		}
+	}
+
+	closedir(dir);
+}
+
+void print_file_stat(char *file_path) {
+	struct stat stat_buf;
+	if (lstat(file_path, &stat_buf) < 0) {
+		perror("lstat");
+		return;
+	}
+
+	printf("%10.10s ", (S_ISDIR(stat_buf.st_mode)) ? "d" : "-");
+	printf("%3lu ", stat_buf.st_nlink);
+
+	struct passwd *pw = getpwuid(stat_buf.st_uid);
+	struct group *gr = getgrgid(stat_buf.st_gid);
+	printf("%s %s ", pw ? pw->pw_name : "??", gr ? gr->gr_name : "??");
+
+	printf("%5lld ", (long long)stat_buf.st_size);
+
+	char date_str[256];
+	struct tm *tm = localtime(&stat_buf.st_mtime);
+	strftime(date_str, sizeof(date_str), "%b %d %H:%M", tm);
+	printf("%s ", date_str);
+
+	printf("%s\n", file_path);
+}
