@@ -1,3 +1,0 @@
-In
-test
-.md
