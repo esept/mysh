@@ -38,8 +38,8 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
 
 5. Sortie du Shell
     Pour la sortie du shell
-    - La commande interne `exit` (quitte sans tuer les tâches de fonds);
-    - Le `Ctrl c` qui demande confirmation et tuer les tâches de fonds avant de quitter;
+    - La commande interne `exit` (quitte sans tue les tâches de fonds);
+    - Le `Ctrl c` qui demande confirmation et tue les tâches de fonds avant de quitter;
 
 6. Code de retour d'un processus
     La commande interne status affiche pour le dernier processus `xxxx` exécuté en premier plan (foreground):
@@ -61,8 +61,7 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
     Pour afficher l'état des processus en cours, le shell utilise un programme myps (équivalent à `ps aux` avec affichage en couleur en fonction de l'état du processus)
 
 9. Permettre l'usage du pipeline (`|`)
-    Il permettra de rediriger la sortie standard du programme précédant le | vers l’entrée standard du programme
-    suivant le |.
+    Il permettra de rediriger la sortie standard du programme précédant le | vers l’entrée standard du programme suivant le |.
 
     ```bash
     ∼> ls | sort -r

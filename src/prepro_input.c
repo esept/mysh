@@ -141,7 +141,7 @@ void preprocess(char *input, int length) {
 		if (rest_cmd == NULL){
 			break;
 		}
-		while (*rest_cmd != NULL && *rest_cmd != '\0' ) {
+		while (rest_cmd != NULL && *rest_cmd != '\0' ) {
 			char *next = strstr(rest_cmd, "&&");
 			char *next_or = strstr(rest_cmd, "||");
 			char *op_end;
@@ -247,8 +247,8 @@ void split(char *input, int length) {
 		if (next == NULL || (next_or != NULL && next_or < next)) {
 			next = next_or;
 		}
-		int pos_rest = strlen(rest);
-		int pos_next = strlen(next);
+		// int pos_rest = strlen(rest);
+		// int pos_next = strlen(next);
 
 		
 

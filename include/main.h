@@ -19,4 +19,8 @@
 
 extern pid_t globalPID;
 
+#define MAX_BG_PROCESSES 50
+extern pid_t bg_processes[MAX_BG_PROCESSES];
+extern int bg_process_count;
+
 #endif //EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_
