@@ -61,6 +61,7 @@ void preprocess(char *input, int length) {
 int process(int argc, char *argv[], int start, int end) {
 	char *cmd_argv[CMDLEN];
 	int cmd_argc = 0, return_status ,i;
+
 	for (i = start; i < end && i < argc; i++) {
 		if (strcmp(argv[i], "&&") != 0 && strcmp(argv[i], "||") != 0) {
 			cmd_argv[cmd_argc++] = argv[i];
@@ -77,14 +78,14 @@ int process(int argc, char *argv[], int start, int end) {
 		}
 	}
 
+	for (i = 0; i < cmd_argc; ++i) {
+		for (int j = 0; j < strlen(cmd_argv[i]); ++j) {
+			if
+		}
+	}
 
-//	for (i = 0; i < cmd_argc; ++i) {
-//		if (strcmp(cmd_argv[i],"&") == 0){ // pipe |
-//			printf("pipe");
-//			return_status = cmd_back(cmd_argv,cmd_argc);
-//			return return_status;
-//		}
-//	}
+
+
 
 	char *redirect[] = {
 			">",">>","2>","2>>",">&",">&>","<"
@@ -92,8 +93,8 @@ int process(int argc, char *argv[], int start, int end) {
 
 	for (i = 0; i < cmd_argc; ++i) {
 		for (int j = 0; j < 7; ++j) {
-			if (strcmp(cmd_argv[i],redirect[j])){
-				return_status = cmd_redi_1(cmd_argv,cmd_argc);
+			if (strcmp(cmd_argv[i],redirect[j]) == 0){
+				return_status = cmd_redi(cmd_argv,cmd_argc);
 				return return_status;
 			}
 		}

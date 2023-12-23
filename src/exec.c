@@ -187,117 +187,82 @@ int cmd_pipe2(char *argv[], int argc) {
 	}
 
 	return 1;
-} // with builtin function
-
-
-
-// 该函数假设 argv 中包含了重定向符号和文件名
-// 例如: argv = {"ls", "-l", ">", "output.txt", NULL}
-//int cmd_redi_1(char *argv[], int argc) {
-//	int fd;
-//	int i;
-//
-//	// 寻找重定向符号并打开相应的文件
-//	for (i = 0; i < argc; i++) {
-//		if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], ">>") == 0) {
-//			if (i + 1 < argc) {
-//				if (strcmp(argv[i], ">") == 0) {
-//					fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-//				} else { // ">>"
-//					fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
-//				}
-//				if (fd == -1) {
-//					perror("open");
-//					return -1;
-//				}
-//				break;
-//			}
-//		}
-//	}
-//
-//	if (i < argc) {
-//		// 重定向标准输出到文件
-//		dup2(fd, STDOUT_FILENO);
-//
-//		// 执行命令
-//		pid_t pid = fork();
-//		if (pid == 0) {
-//			// 子进程
-//			argv[i] = NULL; // 移除重定向符号及其后的部分
-//			execvp(argv[0], argv);
-//			perror("execvp");
-//			exit(EXIT_FAILURE);
-//		} else if (pid > 0) {
-//			// 父进程
-//			int status;
-//			waitpid(pid, &status, 0);
-//			dup2(STDOUT_FILENO, fd);
-//			close(fd);
-//		} else {
-//			perror("fork");
-//			return -1;
-//		}
-//
-//		// 恢复标准输出并关闭文件描述符
-////		dup2(STDOUT_FILENO, fd);
-////		close(fd);
-//	}
-//
-//	return 1;
-//}
-
-int cmd_redi_1(char *argv[], int argc) {
-	printf("get!");
-	return 1;
-
-	int fd;
-	int i;
-	int save_stdout = dup(STDOUT_FILENO); // 保存原始的标准输出文件描述符
-
-	// 寻找重定向符号并打开相应的文件
-	for (i = 0; i < argc; i++) {
-		if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], ">>") == 0) {
-			if (i + 1 < argc) {
-				if (strcmp(argv[i], ">") == 0) {
-					fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-				} else { // ">>"
-					fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
-				}
-				if (fd == -1) {
-					perror("open");
-					return -1;
-				}
-				break;
-			}
-		}
-	}
-
-	if (i < argc) {
-		// 重定向标准输出到文件
-		dup2(fd, STDOUT_FILENO);
-
-		// 执行命令
-		pid_t pid = fork();
-		if (pid == 0) {
-			// 子进程
-			argv[i] = NULL; // 移除重定向符号及其后的部分
-			execvp(argv[0], argv);
-			perror("execvp");
-			exit(EXIT_FAILURE);
-		} else if (pid > 0) {
-			// 父进程
-			int status;
-			waitpid(pid, &status, 0);
-
-			// 恢复标准输出并关闭文件描述符
-			dup2(save_stdout, STDOUT_FILENO);
-			close(fd);
-			close(save_stdout);
-		} else {
-			perror("fork");
-			return -1;
-		}
-	}
-
-	return 0;
 }
+
+int cmd_redi(char *argv[], int argc) {
+	int save_stdout = dup(STDOUT_FILENO);
+	int save_stderr = dup(STDERR_FILENO);
+	int save_stdin = dup(STDIN_FILENO);
+	int fd;
+	char *new_argv[argc]; // 创建新的参数数组
+	int new_argc = 0;
+
+	for (int i = 0; i < argc; i++) {
+		if (strcmp(argv[i], ">") == 0) {
+			fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			dup2(fd, STDOUT_FILENO);
+			close(fd);
+			i++; // 跳过文件名
+		} else if (strcmp(argv[i], ">>") == 0) {
+			fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
+			dup2(fd, STDOUT_FILENO);
+			close(fd);
+			i++;
+		} else if (strcmp(argv[i], "2>") == 0) {
+			fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			dup2(fd, STDERR_FILENO);
+			close(fd);
+			i++;
+		} else if (strcmp(argv[i], "2>>") == 0) {
+			fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
+			dup2(fd, STDERR_FILENO);
+			close(fd);
+			i++;
+		} else if (strcmp(argv[i], "<") == 0){
+			fd = open(argv[i + 1],O_RDONLY);
+			dup2(fd,STDIN_FILENO);
+			close(fd);
+			i++;
+		} else if (strcmp(argv[i], ">>&") == 0 || strcmp(argv[i], ">&") == 0) {
+			fd = open(argv[i + 1], (strcmp(argv[i], ">>&") == 0) ? (O_WRONLY | O_CREAT | O_APPEND) : (O_WRONLY | O_CREAT | O_TRUNC), 0644);
+			if (fd == -1) {
+				perror("open");
+				return -1;
+			}
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			close(fd);
+			argv[i] = NULL; // 从此处开始移除重定向符号及其后的文件名
+			argv[i + 1] = NULL;
+			break; // 假设处理了第一个重定向符号
+		}else {
+			new_argv[new_argc++] = argv[i]; // 保留非重定向参数
+		}
+	}
+	new_argv[new_argc] = NULL; // 结束新的参数数组
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		// 子进程
+		execvp(new_argv[0], new_argv);
+		perror("execvp");
+		exit(EXIT_FAILURE);
+	} else if (pid > 0) {
+		// 父进程
+		int status;
+		waitpid(pid, &status, 0);
+	} else {
+		perror("fork");
+		return -1;
+	}
+
+	// 恢复原始的标准输出和标准错误
+	dup2(save_stdout, STDOUT_FILENO);
+	dup2(save_stderr, STDERR_FILENO);
+	dup2(save_stdin, STDIN_FILENO); // 恢复标准输入
+	close(save_stdout);
+	close(save_stderr);
+	close(save_stdin);
+	return 0;
+} // redirect
+
