@@ -24,6 +24,7 @@ void signalHandler(int sig){
 			kill(globalPID,SIGINT);
 		}else{
 			printf("none\n");
+			return;
 		}
 	}
 }
@@ -42,6 +43,5 @@ int main() {
 		}
 		size_t len = strlen(thiscmd);
 		preprocess(thiscmd, len);
-//		split(thiscmd,len);
 	}
 }

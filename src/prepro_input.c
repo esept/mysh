@@ -11,7 +11,7 @@
 #include "../include/myls.h"
 #include "../include/myps.h"
 
-int cmdop(char *input[], int a, int len) {
+int getop(char **input, int a, int len) {
 	for (int i = a + 1; i < len; ++i) {
 		if (strcmp(input[i], "&&") == 0 || strcmp(input[i], "||") == 0) {
 			return i;
@@ -34,10 +34,10 @@ void preprocess(char *input, int length) {
 	int posop;
 	while ((cmd_seg = strtok_r(rest_cmd, ";", &rest_cmd))) {
 		argc = split_space(cmd_seg, argv);
-		posop = cmdop(argv, 0, argc);
+		posop = getop(argv, 0, argc);
 		while (posop != 0) {
 			logop[i++] = posop;
-			posop = cmdop(argv, posop, argc);
+			posop = getop(argv, posop, argc);
 		}
 
 		int last_status = 0; // 上一个命令的返回状态
@@ -61,7 +61,6 @@ void preprocess(char *input, int length) {
 int process(int argc, char *argv[], int start, int end) {
 	char *cmd_argv[CMDLEN];
 	int cmd_argc = 0, return_status ,i;
-	pid_t pid;
 	for (i = start; i < end && i < argc; i++) {
 		if (strcmp(argv[i], "&&") != 0 && strcmp(argv[i], "||") != 0) {
 			cmd_argv[cmd_argc++] = argv[i];
@@ -69,12 +68,36 @@ int process(int argc, char *argv[], int start, int end) {
 	}
 	cmd_argv[cmd_argc] = NULL;
 
-	for (i = 0; i < ; ++i) {
 
+	for (i = 0; i < cmd_argc; ++i) {
+		if (strcmp(cmd_argv[i],"|") == 0){ // pipe |
+			printf("pipe");
+			return_status = cmd_pipe2(cmd_argv,cmd_argc);
+			return return_status;
+		}
 	}
 
 
+//	for (i = 0; i < cmd_argc; ++i) {
+//		if (strcmp(cmd_argv[i],"&") == 0){ // pipe |
+//			printf("pipe");
+//			return_status = cmd_back(cmd_argv,cmd_argc);
+//			return return_status;
+//		}
+//	}
 
+	char *redirect[] = {
+			">",">>","2>","2>>",">&",">&>","<"
+	};
+
+	for (i = 0; i < cmd_argc; ++i) {
+		for (int j = 0; j < 7; ++j) {
+			if (strcmp(cmd_argv[i],redirect[j])){
+				return_status = cmd_redi_1(cmd_argv,cmd_argc);
+				return return_status;
+			}
+		}
+	}
 
 	if (strcmp(cmd_argv[0],"cd") == 0){
 		return_status = command_cd(cmd_argv[1]);
@@ -90,19 +113,6 @@ int process(int argc, char *argv[], int start, int end) {
 	}
 	return return_status;
 }
-
-
-
-//char **split_tab(char *tabs[], char *tabrest[], int a, int b) {
-//	int x = b - a + 1;
-////	char *tabrest[x];
-//	tabrest = (char **)malloc(sizeof(char *) * x);
-//	for (int i = a; i < b + 1; ++i) {
-//		tabrest[i] = (char *)malloc(sizeof(char) * CMDLEN);
-//		strcpy(tabrest[i - a], tabs[i]);
-//	}
-//	return tabrest;
-//}
 
 int split_space(char *cmd, char *args[]) {
 	int i = 0, j = 0;
@@ -162,3 +172,41 @@ void split(char *input, int length) {
 
 	}
 }
+
+
+
+int is_builtin_command(char *cmd) {
+	// 这里列出了一些常见的内置命令，您可以根据需要添加更多
+	printf("check builtin\n\n");
+	const char *builtin_commands[] = {"cd", "exit", "myls", "status", NULL};
+
+	for (int i = 0; builtin_commands[i] != NULL; i++) {
+		if (strcmp(cmd, builtin_commands[i]) == 0) {
+			return 1; // 是内置命令
+		}
+	}
+	return 0; // 不是内置命令
+}
+
+int execute_builtin_command(char *argv[], int pipefds[], int cmd_index, int num_pipes) {
+	// 检查并执行相应的内置命令
+	if (strcmp(argv[0], "cd") == 0) {
+		return command_cd(argv[1]); // 假设 command_cd 函数处理 cd 命令
+	} else if (strcmp(argv[0], "exit") == 0) {
+		exit(EXIT_SUCCESS);
+	} else if (strcmp(argv[0], "myls") == 0) {
+		return command_myls(argv, cmd_index); // 假设 command_myls 函数处理 myls 命令
+	} else if (strcmp(argv[0], "status") == 0) {
+		printf("last status = %d\n", status);
+		return 1;
+	}
+	// ... 添加其他内置命令的处理 ...
+
+	// 对于涉及管道的情况，您可能需要在此处添加逻辑以正确地设置输入和输出重定向
+
+	return 0; // 如果没有匹配的内置命令，返回0
+}
+
+
+
+
