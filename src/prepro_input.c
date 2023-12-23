@@ -11,199 +11,109 @@
 #include "../include/myls.h"
 #include "../include/myps.h"
 
-/**
-void split_logop(char *input){
-	char *rest_line = input;
-	char *cmd_seg;
-	int last_status = 0;
-	int exec_status = 1;
-	while ((cmd_seg = strtok_r(rest_line,"&&",&rest_line))){
-		char *tabcmd[SIZE];
-		split_space(rest_line,tabcmd);
-		if ((strstr(cmd_seg,"&&") != NULL && last_status == 0) ||
-				(strstr(cmd_seg,"||") != NULL && last_status != 0) ||
-				(strstr(cmd_seg,"&&") != NULL && strstr(cmd_seg,"||") == NULL )){
-			if (strcmp(tabcmd[0],"cd") == 0){
-				last_status = change_dict(tabcmd[1]);
-				continue;
-			} else if(strcmp(tabcmd[0],"exit")){
-				exit(EXIT_SUCCESS);
-			}else{
-				last_status = exec_cmd(tabcmd);
-				exec_status = 1;
-			}
-		} else{
-			exec_status = 0;
+int cmdop(char *input[], int a, int len) {
+	for (int i = a + 1; i < len; ++i) {
+		if (strcmp(input[i], "&&") == 0 || strcmp(input[i], "||") == 0) {
+			return i;
 		}
 	}
+	return 0;
 }
- **/
-
-//void preprocess(char *input, int length) {
-//	if (length > 0 && input[length - 1] == '\n') {
-//		input[length - 1] = '\0';
-//	}
-//	char *rest_line = input;
-//	char *cmd_seg;
-//	while ((cmd_seg = strtok_r(rest_line, ";", &rest_line))) {
-//		char *tabcmd[SIZE], *token, *rest_cmd = cmd_seg;
-//		int i = 0;
-//
-//		while ((token = strtok_r(rest_cmd, " ", &rest_cmd)) != NULL && i < SIZE) {
-//			tabcmd[i++] = token;
-//		}
-//		tabcmd[i] = NULL;
-//		if (tabcmd[0] != NULL) {
-//			if (strcmp(tabcmd[0], "cd") == 0) {
-//				command_cd(tabcmd[1]);
-//				continue;
-//			} else if (strcmp(tabcmd[0], "myps") == 0) {
-//				command_myps();
-//				continue;
-//			} else if (strcmp(tabcmd[0], "myls") == 0) {
-//				command_myls(tabcmd, i);
-//				continue;
-//			} else if (strcmp(tabcmd[0], "exit") == 0) {
-//				exit(EXIT_SUCCESS);
-//			} else {
-//				exec_cmd(tabcmd);
-//			}
-//		}
-//	}
-//
-//}
-
-//void preprocess(char *input,int length){
-//	if(length > 0 && input[length -1] == '\n'){
-//		input[length - 1] = '\0';
-//	}
-//	char *rest_input = input;
-//	char *command_segment;
-//	while ((command_segment = strtok_r(rest_input,";",&rest_input))){
-//		char *rest_cmd = command_segment;
-//		char *cmd_part ;
-//		int last_status = 0;
-//		int execute_next = 1;
-//		char *next = strstr(rest_cmd, "&&");
-//		char *next_or = strstr(rest_cmd,"||");
-//		char *op = "&&";
-//		if (next == NULL || (next_or != NULL && next_or < next)) {
-//			op = "||";
-//		} // 显示最靠前的逻辑符号
-//		while ((cmd_part = strtok_r(rest_cmd,op,&rest_cmd))){
-//			char *tabcmd[SIZE],*token,*rrcmd = cmd_part;
-//			int i = 0;
-//
-//			while ((token = strtok_r(rrcmd," ",&rrcmd)) != NULL && i < SIZE){
-//				tabcmd[i++] = token;
-//			}
-//			tabcmd[i] = NULL;
-//			if (execute_next){
-//				if (strcmp(tabcmd[0],"cd") == 0){
-//					command_cd(tabcmd[1]);
-//					last_status = 0;
-//				} else if(strcmp(tabcmd[0],"exit") == 0){
-//					exit(EXIT_SUCCESS);
-//				} else if (strcmp(tabcmd[0],"myls") == 0){
-//					command_myls(tabcmd,i);
-//					last_status = 0;
-//					continue;
-//				}else{
-//					exec_cmd(tabcmd);
-//				}
-//			}
-//			if (*rest_cmd == '&'){
-//				execute_next = (last_status == 0);
-//			}else if (*rest_cmd == '|'){
-//				execute_next = (last_status != 0);
-//			}
-//
-//			if(*rest_cmd != '\0'){
-//				rest_cmd++;
-//			}
-//
-//		}
-//	}
-//}
 
 void preprocess(char *input, int length) {
+	int i;
 	if (length > 0 && input[length - 1] == '\n') {
 		input[length - 1] = '\0';
 	}
-	int last_command_status = 0;
-	char *rest_input = input;
-	char *command_segment;
-
-	while ((command_segment = strtok_r(rest_input, ";", &rest_input))) {
-		char *rest_cmd = command_segment;
-		int last_status = 0;
-		int execute_next = 1;
-		if (rest_cmd == NULL){
-			break;
+	int argc, execute_next = 1, lop = 0;
+	char *argv[CMDLEN];
+	i = 0;
+	char *rest_cmd = input;
+	char *cmd_seg;
+	int logop[CMDLEN];
+	int posop;
+	while ((cmd_seg = strtok_r(rest_cmd, ";", &rest_cmd))) {
+		argc = split_space(cmd_seg, argv);
+		posop = cmdop(argv, 0, argc);
+		while (posop != 0) {
+			logop[i++] = posop;
+			posop = cmdop(argv, posop, argc);
 		}
-		while (*rest_cmd != NULL && *rest_cmd != '\0' ) {
-			char *next = strstr(rest_cmd, "&&");
-			char *next_or = strstr(rest_cmd, "||");
-			char *op_end;
 
-			if (next == NULL || (next_or != NULL && next_or < next)) {
-				next = next_or;
-				op_end = next ? next + 2 : NULL; // 对于 '||'
-			} else {
-				op_end = next + 2; // 对于 '&&'
-			}
-
-			if (next) {
-				*next = '\0'; // 切断当前命令
-			}
-			if (strstr(rest_cmd,"|")){
-				if (execute_next){
-					exec_pipe(rest_cmd);
-				}
-			}else {
-
-				char *tabcmd[SIZE], *token;
-				int i = 0;
-
-				while ((token = strtok_r(rest_cmd, " ", &rest_cmd)) != NULL && i < SIZE) {
-					tabcmd[i++] = token;
-				}
-				tabcmd[i] = NULL;
-
-				if (execute_next) {
-					if (strcmp(tabcmd[0], "cd") == 0) {
-						last_status = command_cd(tabcmd[1]);
-					} else if (strcmp(tabcmd[0], "exit") == 0) {
-						exit(EXIT_SUCCESS);
-					} else if (strcmp(tabcmd[0], "myls") == 0) {
-						last_status = command_myls(tabcmd, i);
-//						continue;
-					}else if (strcmp(tabcmd[0],"status") == 0){
-						printf("Last command status = %d\n",last_command_status);
-					}else {
-						last_status = exec_cmd(tabcmd);
-					}
+		int last_status = 0; // 上一个命令的返回状态
+		logop[i++] = posop;
+		if (i != 0) { // 如果有逻辑操作
+			for (int j = 0; j < i; j++) {
+				if (j == 0 || (strcmp(argv[logop[j-1]],"&&") == 0 && last_status == 0) || ( strcmp(argv[logop[j-1]],"||") == 0 && last_status != 0)) {
+					int start = (j == 0) ? 0 : logop[j-1] + 1;
+					int end = (j < i - 1) ? logop[j] : argc;
+					last_status = process(argc, argv, start, end);
+					status = last_status;
 				}
 			}
-			if (next) {
-				execute_next = (last_status == 0 && strcmp(next, "&") == 0) || (last_status != 0 && strcmp(next, "|") == 0);
-				rest_cmd = op_end;
-			} else {
-				break; // 没有更多的逻辑运算符
-			}
+		} else {
+			last_status = process(argc, argv, 0, argc);
+			status = last_status;
 		}
-		last_command_status = last_status;
 	}
 }
 
+int process(int argc, char *argv[], int start, int end) {
+	char *cmd_argv[CMDLEN];
+	int cmd_argc = 0, return_status ,i;
+	pid_t pid;
+	for (i = start; i < end && i < argc; i++) {
+		if (strcmp(argv[i], "&&") != 0 && strcmp(argv[i], "||") != 0) {
+			cmd_argv[cmd_argc++] = argv[i];
+		}
+	}
+	cmd_argv[cmd_argc] = NULL;
 
-void split_space(char *cmd, char *args[]) {
-	int i = 0;
+	for (i = 0; i < ; ++i) {
+
+	}
+
+
+
+
+	if (strcmp(cmd_argv[0],"cd") == 0){
+		return_status = command_cd(cmd_argv[1]);
+	}else if(strcmp(cmd_argv[0],"myls") == 0){
+		return_status = command_myls(cmd_argv,cmd_argc);
+	}else if(strcmp(cmd_argv[0],"exit") == 0){
+		exit(EXIT_SUCCESS);
+	} else if(strcmp(cmd_argv[0],"status") == 0){
+		printf("last status = %d",status);
+		return_status = 1;
+	}else{
+		return_status = exec_cmd(cmd_argv);
+	}
+	return return_status;
+}
+
+
+
+//char **split_tab(char *tabs[], char *tabrest[], int a, int b) {
+//	int x = b - a + 1;
+////	char *tabrest[x];
+//	tabrest = (char **)malloc(sizeof(char *) * x);
+//	for (int i = a; i < b + 1; ++i) {
+//		tabrest[i] = (char *)malloc(sizeof(char) * CMDLEN);
+//		strcpy(tabrest[i - a], tabs[i]);
+//	}
+//	return tabrest;
+//}
+
+int split_space(char *cmd, char *args[]) {
+	int i = 0, j = 0;
 	char *token;
 	while ((token = strtok_r(cmd, " ", &cmd)) != NULL && i < SIZE) {
+
 		args[i++] = token;
+		j++;
 	}
 	args[i] = NULL;
+	return j;
 }
 
 void split_semicolon(char *input) {
@@ -211,18 +121,18 @@ void split_semicolon(char *input) {
 	char *cmd_seg;
 	while ((cmd_seg = strtok_r(rest_line, ";", &rest_line))) {
 		char *tabcmd[SIZE];
-		split_space(cmd_seg, tabcmd);
+//		split_space(cmd_seg, tabcmd);
 		if (strcmp(tabcmd[0], "cd") == 0) {
 			command_cd(tabcmd[1]);
 			continue;
 		} else if (strcmp(tabcmd[0], "exit") == 0) {
 			exit(EXIT_SUCCESS);
 		}
-		exec_cmd(tabcmd);
+		printf("%s\n", cmd_seg);
+//		exec_cmd(tabcmd);
 	}
+	printf("%s", cmd_seg);
 }
-
-
 
 void split(char *input, int length) {
 	if (length > 0 && input[length - 1] == '\n') {
@@ -243,14 +153,12 @@ void split(char *input, int length) {
 	for (int i = 0; i < cmd_count; ++i) {
 		char *rest = tabcmds[i];
 		char *next = strstr(rest, "&&");
-		char *next_or = strstr(rest,"||");
+		char *next_or = strstr(rest, "||");
 		if (next == NULL || (next_or != NULL && next_or < next)) {
 			next = next_or;
 		}
 		int pos_rest = strlen(rest);
 		int pos_next = strlen(next);
-
-		
 
 	}
 }

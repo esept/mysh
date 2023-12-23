@@ -5,9 +5,15 @@
 #ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
 #define EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
 
-void preprocess(char *input,int length);
+int status;
 
-void split_space(char *cmd,char *args[]);
+
+int cmdop(char *input[], int a, int len);
+void preprocess(char *input,int length);
+int process(int argc,char *argv[],int start,int end);
+char ** split_tab(char *tabs[],char *tabrest[],int a,int b);
+
+int split_space(char *cmd,char *args[]);
 void split_semicolon(char *input);
 void split_logop(char *input);
 
