@@ -12,6 +12,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
+#include <sys/types.h>
 
 int command_myls(char *path[], int length) {
 	int all = 0, Rec = 0, i;
@@ -145,4 +146,3 @@ int test_search(char * options){
 	}
 	return num;
 }
-

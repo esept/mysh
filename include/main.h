@@ -6,6 +6,7 @@
 #define EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_
 
 #include <unistd.h>
+#include <sys/types.h>
 
 #define getError(x) perror(x),exit(EXIT_FAILURE)
 
@@ -21,6 +22,6 @@ extern pid_t globalPID;
 
 #define MAX_BG_PROCESSES 50
 extern pid_t bg_processes[MAX_BG_PROCESSES];
-extern int bg_process_count;
+extern int last_bg_process_index;
 
 #endif //EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_

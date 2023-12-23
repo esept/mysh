@@ -5,126 +5,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../include/prepro_input.h"
-#include "../include/main.h"
-#include "../include/exec.h"
-#include "../include/myls.h"
-#include "../include/myps.h"
-
-/**
-void split_logop(char *input){
-	char *rest_line = input;
-	char *cmd_seg;
-	int last_status = 0;
-	int exec_status = 1;
-	while ((cmd_seg = strtok_r(rest_line,"&&",&rest_line))){
-		char *tabcmd[SIZE];
-		split_space(rest_line,tabcmd);
-		if ((strstr(cmd_seg,"&&") != NULL && last_status == 0) ||
-				(strstr(cmd_seg,"||") != NULL && last_status != 0) ||
-				(strstr(cmd_seg,"&&") != NULL && strstr(cmd_seg,"||") == NULL )){
-			if (strcmp(tabcmd[0],"cd") == 0){
-				last_status = change_dict(tabcmd[1]);
-				continue;
-			} else if(strcmp(tabcmd[0],"exit")){
-				exit(EXIT_SUCCESS);
-			}else{
-				last_status = exec_cmd(tabcmd);
-				exec_status = 1;
-			}
-		} else{
-			exec_status = 0;
-		}
-	}
-}
- **/
-
-//void preprocess(char *input, int length) {
-//	if (length > 0 && input[length - 1] == '\n') {
-//		input[length - 1] = '\0';
-//	}
-//	char *rest_line = input;
-//	char *cmd_seg;
-//	while ((cmd_seg = strtok_r(rest_line, ";", &rest_line))) {
-//		char *tabcmd[SIZE], *token, *rest_cmd = cmd_seg;
-//		int i = 0;
-//
-//		while ((token = strtok_r(rest_cmd, " ", &rest_cmd)) != NULL && i < SIZE) {
-//			tabcmd[i++] = token;
-//		}
-//		tabcmd[i] = NULL;
-//		if (tabcmd[0] != NULL) {
-//			if (strcmp(tabcmd[0], "cd") == 0) {
-//				command_cd(tabcmd[1]);
-//				continue;
-//			} else if (strcmp(tabcmd[0], "myps") == 0) {
-//				command_myps();
-//				continue;
-//			} else if (strcmp(tabcmd[0], "myls") == 0) {
-//				command_myls(tabcmd, i);
-//				continue;
-//			} else if (strcmp(tabcmd[0], "exit") == 0) {
-//				exit(EXIT_SUCCESS);
-//			} else {
-//				exec_cmd(tabcmd);
-//			}
-//		}
-//	}
-//
-//}
-
-//void preprocess(char *input,int length){
-//	if(length > 0 && input[length -1] == '\n'){
-//		input[length - 1] = '\0';
-//	}
-//	char *rest_input = input;
-//	char *command_segment;
-//	while ((command_segment = strtok_r(rest_input,";",&rest_input))){
-//		char *rest_cmd = command_segment;
-//		char *cmd_part ;
-//		int last_status = 0;
-//		int execute_next = 1;
-//		char *next = strstr(rest_cmd, "&&");
-//		char *next_or = strstr(rest_cmd,"||");
-//		char *op = "&&";
-//		if (next == NULL || (next_or != NULL && next_or < next)) {
-//			op = "||";
-//		} // 显示最靠前的逻辑符号
-//		while ((cmd_part = strtok_r(rest_cmd,op,&rest_cmd))){
-//			char *tabcmd[SIZE],*token,*rrcmd = cmd_part;
-//			int i = 0;
-//
-//			while ((token = strtok_r(rrcmd," ",&rrcmd)) != NULL && i < SIZE){
-//				tabcmd[i++] = token;
-//			}
-//			tabcmd[i] = NULL;
-//			if (execute_next){
-//				if (strcmp(tabcmd[0],"cd") == 0){
-//					command_cd(tabcmd[1]);
-//					last_status = 0;
-//				} else if(strcmp(tabcmd[0],"exit") == 0){
-//					exit(EXIT_SUCCESS);
-//				} else if (strcmp(tabcmd[0],"myls") == 0){
-//					command_myls(tabcmd,i);
-//					last_status = 0;
-//					continue;
-//				}else{
-//					exec_cmd(tabcmd);
-//				}
-//			}
-//			if (*rest_cmd == '&'){
-//				execute_next = (last_status == 0);
-//			}else if (*rest_cmd == '|'){
-//				execute_next = (last_status != 0);
-//			}
-//
-//			if(*rest_cmd != '\0'){
-//				rest_cmd++;
-//			}
-//
-//		}
-//	}
-//}
+#include "prepro_input.h"
+#include "main.h"
+#include "exec.h"
+#include "myls.h"
+#include "myps.h"
+#include "status.h"
 
 void preprocess(char *input, int length) {
 	if (length > 0 && input[length - 1] == '\n') {
@@ -161,7 +47,6 @@ void preprocess(char *input, int length) {
 					exec_pipe(rest_cmd);
 				}
 			}else {
-
 				char *tabcmd[SIZE], *token;
 				int i = 0;
 
@@ -177,10 +62,12 @@ void preprocess(char *input, int length) {
 						exit(EXIT_SUCCESS);
 					} else if (strcmp(tabcmd[0], "myls") == 0) {
 						last_status = command_myls(tabcmd, i);
-//						continue;
-					}else if (strcmp(tabcmd[0],"status") == 0){
-						printf("Last command status = %d\n",last_command_status);
-					}else {
+						// continue;
+					} else if (strcmp(tabcmd[0],"myps") == 0){
+						command_myps();
+					} else if (strcmp(tabcmd[0],"status") == 0){
+						display_last_process_status(lastTerminatedProcess);
+					} else {
 						last_status = exec_cmd(tabcmd);
 					}
 				}
@@ -195,7 +82,6 @@ void preprocess(char *input, int length) {
 		last_command_status = last_status;
 	}
 }
-
 
 void split_space(char *cmd, char *args[]) {
 	int i = 0;
@@ -222,8 +108,6 @@ void split_semicolon(char *input) {
 	}
 }
 
-
-
 void split(char *input, int length) {
 	if (length > 0 && input[length - 1] == '\n') {
 		input[length - 1] = '\0';
@@ -249,8 +133,5 @@ void split(char *input, int length) {
 		}
 		// int pos_rest = strlen(rest);
 		// int pos_next = strlen(next);
-
-		
-
 	}
 }

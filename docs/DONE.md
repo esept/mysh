@@ -19,6 +19,10 @@
 | 13 | var env | |
 | 14 | | |
 
+| N° | To improve | Suggestion |
+| -- | ---------- | ---------- |
+| 1 | return codes (only one return code for same kinds of things) | enum to define return codes ([EX](https://github.com/trab-ml/bomber-student/blob/server-jeu/include/error_handler.h)) |
+
 ## EX
 
 ### AND

@@ -14,24 +14,15 @@
 
 #include "../include/prepro_input.h"
 #include "../include/main.h"
+#include "status.h"
 
 pid_t globalPID = 0;
 pid_t bg_processes[MAX_BG_PROCESSES];
-int bg_process_count = 0;
-
-// void signalHandler(int sig){
-// 	if (sig == SIGINT){
-// 		// 检查当前运行进程
-// 		if(globalPID != 0){//当前进程存在
-// 			kill(globalPID,SIGINT);
-// 		}else{
-// 			printf("none\n");
-// 		}
-// 	}
-// }
+int last_bg_process_index = -1;
+terminatedProcess lastTerminatedProcess = {0, 0, NULL};
 
 void killBackgroundProcesses() {
-    for (int i = 0; i < bg_process_count; i++) {
+    for (int i = 0; i <= last_bg_process_index; i++) {
         kill(bg_processes[i], SIGKILL);
     }
 }
@@ -52,6 +43,7 @@ void signalHandler(int sig) {
 
     if (c != 'y') {
         signal(SIGINT, signalHandler);
+		return;
     } 
 	killBackgroundProcesses();
     exit(EXIT_SUCCESS);
@@ -71,7 +63,7 @@ int main() {
 		}
 		size_t len = strlen(thiscmd);
 		preprocess(thiscmd, len);
-//		split(thiscmd,len);
+		// split(thiscmd,len);
 	}
 
 	return 0;

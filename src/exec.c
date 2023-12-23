@@ -11,6 +11,7 @@
 #include <glob.h>
 #include <regex.h>
 #include <sys/stat.h>
+#include "status.h"
 #include "main.h"
 
 #define SUPPORTED_WILDCARDS ".*?[]{}^~"
@@ -49,7 +50,7 @@ int exec_cmd(char * cmd[]){
 		getError("fork");
 	else if(pid == 0){
 		// child
-		bg_processes[bg_process_count++] = getpid();
+		bg_processes[++last_bg_process_index] = getpid();
 		regexIndex = getRegexIndex(cmd);
 		if (regexIndex != -1) {
             glob_t glob_result;
@@ -60,10 +61,8 @@ int exec_cmd(char * cmd[]){
 
             // check if at least one file matches the wildcard
             if (glob_result.gl_pathc > 0) {
-				// Calculate the new length of the command
                 size_t newCmdLength = regexIndex + glob_result.gl_pathc + 1;
 
-                // Allocate memory for the new command
                 char **newCmd = malloc(newCmdLength * sizeof(char *));
                 if (newCmd == NULL) {
                     perror("Erreur d'allocation mémoire");
@@ -80,15 +79,13 @@ int exec_cmd(char * cmd[]){
                     newCmd[regexIndex + j] = strdup(glob_result.gl_pathv[j]);
                 }
 
-                // Add NULL at the end of the new command
+                // Mark the end of newCmd with NULL
                 newCmd[newCmdLength - 1] = NULL;
-
-                // Replace the old command with the new one
                 cmd = newCmd;
+				free(newCmd);
 
                 if (execvp(cmd[0], cmd) == ERR) {
-                    perror("Erreur lors de l'exécution de la commande");
-                    exit(EXIT_FAILURE);
+                    getError("execvp");
                 }
             } else {
 				for (size_t j = 0; j < glob_result.gl_pathc; j++) {
@@ -102,10 +99,11 @@ int exec_cmd(char * cmd[]){
         } else {
             if (execvp(cmd[0], cmd) == ERR) getError("exec");
         }
-	} else{
-		bg_processes[bg_process_count++] = getpid();
+	} else {
+		bg_processes[++last_bg_process_index] = getpid();
 		globalPID = pid;
 		waitpid(pid,&status,0);
+		set_last_terminated_process_status(status, pid, cmd[0]);
 		globalPID = 0;
 		return WEXITSTATUS(status);
 	}
@@ -123,6 +121,7 @@ int command_cd(char *path){
 
 void exec_pipe(char *cmd){
 	int pipefd[2];
+	int status;
 	pid_t pid;
 	char *cmd_part;
 	int fd_in = 0;
@@ -135,7 +134,7 @@ void exec_pipe(char *cmd){
 		}
 
 		if (pid == 0) {
-			bg_processes[bg_process_count++] = getpid();
+			bg_processes[++last_bg_process_index] = getpid();
 			dup2(fd_in, 0); // 复制 fd_in 到 stdin
 			if (*cmd != '\0') {
 				dup2(pipefd[1], 1); // 复制 stdout 到 pipefd[1]
@@ -149,11 +148,12 @@ void exec_pipe(char *cmd){
 				exit(EXIT_FAILURE);
 			}
 		} else {
-			bg_processes[bg_process_count++] = getpid();
-			wait(NULL); // 等待子进程结束
+			bg_processes[++last_bg_process_index] = getpid();
+			// wait(NULL); // 等待子进程结束
+			waitpid(pid,&status,0);
+			set_last_terminated_process_status(status, pid, cmd[0]); // update the info about the last terminated process
 			close(pipefd[1]);
 			fd_in = pipefd[0]; // 将 pipefd[0] 保存为下一个命令的 stdin
 		}
 	}
 }
-
