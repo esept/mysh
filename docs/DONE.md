@@ -9,9 +9,9 @@
 | 4 | cd | OK |  
 | 5.1 | exit | OK (souvent faut taper 2 fois) |  
 | 5.1 | Ctrl c, Ctrl d | OK (ENTREE X2), KO (unfinite loop) |
-| 6 | status | [...](#status) |
+| 6 | status | OK |
 | 7 | myls | OK |
-| 8 | myps (ps -aux) | ... |
+| 8 | myps (ps -aux) | OK |
 | 9 | \| | OK |
 | 10 | Redirections | [~OK](#redirections) |
 | 11 | Premier et arrière plans | [~OK](#prem) |

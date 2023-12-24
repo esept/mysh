@@ -1,3 +1,8 @@
+/**
+ * @file myps.c
+ * @brief Implementation of functions related to process status.
+ */
+
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>

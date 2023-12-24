@@ -8,7 +8,7 @@
 #define VERT(m) "\033[01;32m"m"\033[0m"
 #define ORANGE(m) "\033[01;33m"m"\033[0m"
 
-// Define enum for error codes
+//Error codes for the program.
 typedef enum
 {
     INVALID_ARGUMENT_ERROR, // Error code for invalid arguments
