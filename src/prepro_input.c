@@ -10,6 +10,7 @@
 #include "../include/exec.h"
 #include "../include/myls.h"
 #include "../include/myps.h"
+#include "../include/variable.h"
 
 int getop(char **input, int a, int len) {
 	for (int i = a + 1; i < len; ++i) {
@@ -78,13 +79,27 @@ int process(int argc, char *argv[], int start, int end) {
 		}
 	}
 
+	char *variable_tab[] = {
+			"set","setenv","unset"
+	};
 	for (i = 0; i < cmd_argc; ++i) {
-		for (int j = 0; j < strlen(cmd_argv[i]); ++j) {
-			if
+		for (int j = 0; j < 3; ++j) {
+			if (strcmp(cmd_argv[i],variable_tab[j]) == 0){
+				return_status = set_variable(cmd_argc,cmd_argv);
+				return return_status;
+			}
 		}
+
 	}
 
-
+	for (i = 0;  i<cmd_argc ; i++) {
+		for (int j = 0; j < strlen(cmd_argv[i]); ++j) {
+			if ('$' == cmd_argv[i][j]){
+				return_status = use_variable(cmd_argc,cmd_argv);
+				return return_status;
+			}
+		}
+	}
 
 
 	char *redirect[] = {
@@ -174,11 +189,10 @@ void split(char *input, int length) {
 	}
 }
 
-
-
+//
+//
 int is_builtin_command(char *cmd) {
-	// 这里列出了一些常见的内置命令，您可以根据需要添加更多
-	printf("check builtin\n\n");
+//	printf("check builtin\n\n");
 	const char *builtin_commands[] = {"cd", "exit", "myls", "status", NULL};
 
 	for (int i = 0; builtin_commands[i] != NULL; i++) {
@@ -190,7 +204,6 @@ int is_builtin_command(char *cmd) {
 }
 
 int execute_builtin_command(char *argv[], int pipefds[], int cmd_index, int num_pipes) {
-	// 检查并执行相应的内置命令
 	if (strcmp(argv[0], "cd") == 0) {
 		return command_cd(argv[1]); // 假设 command_cd 函数处理 cd 命令
 	} else if (strcmp(argv[0], "exit") == 0) {

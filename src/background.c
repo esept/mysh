@@ -1,77 +1,31 @@
-////
-//// Created by XuZY on 2023/12/23.
-////
 //
-//#include "background.h"
-//#include "main.h"
+// Created by XuZY on 2023/12/23.
 //
-//#include <sys/types.h>
-//#include <sys/wait.h>
-//#include <unistd.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <signal.h>
-//
-//// 全局变量用于存储后台进程信息
-//typedef struct {
-//	pid_t pid;       // 进程ID
-//	int job_number;  // 作业号
-//	char cmd[CMDLEN];// 命令文本
-//} background_process;
-//
-//background_process bg_processes[SIZE]; // 假设SIZE足够大
-//int num_bg_processes = 0;               // 当前后台进程数量
-//
-//// 向bg_processes数组中添加新的后台进程信息
-//void add_bg_process(pid_t pid, char *cmd) {
-//	if (num_bg_processes < SIZE) {
-//		bg_processes[num_bg_processes].pid = pid;
-//		bg_processes[num_bg_processes].job_number = num_bg_processes + 1;
-//		strncpy(bg_processes[num_bg_processes].cmd, cmd, CMDLEN);
-//		num_bg_processes++;
-//	}
-//	// 你可能还想添加一些错误处理，以防超出数组大小
-//}
-//
-//// 从bg_processes数组中移除已经完成的后台进程
-//void remove_bg_process(pid_t pid) {
-//	for (int i = 0; i < num_bg_processes; i++) {
-//		if (bg_processes[i].pid == pid) {
-//			// 移动数组中的元素来覆盖已完成的进程信息
-//			for (int j = i; j < num_bg_processes - 1; j++) {
-//				bg_processes[j] = bg_processes[j + 1];
-//			}
-//			num_bg_processes--;
-//			break;
-//		}
-//	}
-//}
-//
-//// 实现 cmd_back 函数
-//int cmd_back(char *argv[], int argc) {
-//	pid_t pid = fork();
-//	if (pid == -1) {
-//		perror("fork");
-//		return -1;
-//	} else if (pid == 0) {
-//		// 子进程
-//		execvp(argv[0], argv);
-//		perror("execvp"); // execvp只有在出错时才会返回
-//		exit(EXIT_FAILURE);
-//	} else {
-//		// 父进程
-//		printf("[%d] %d\n", num_bg_processes + 1, pid); // 显示作业号和PID
-//		add_bg_process(pid, argv[0]); // 添加到后台进程列表
-//	}
-//	return 0;
-//}
-//
-//// 你可能还需要实现一个函数来检查并清理已经完成的后台进程
-//void check_bg_processes() {
-//	int status;
-//	pid_t pid;
-//	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-//		printf("Process %d finished\n", pid);
-//		remove_bg_process(pid);
-//	}
-//}
+
+#include "background.h"
+#include "main.h"
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+
+
+/**
+* 5 Premier et arrière plans
+Jusqu’à présent toutes les commandes exécutées, l’étaient en premier plan ou en « foreground », c’est- à-dire que l’on attendait la fin de l’exécution de l’ensemble de la ligne de commandes avant d’afficher de nouveau l’invite de commandes. Votre shell devra prévoir le lancement de commandes en arrière-plan ou en « background », c’est-à-dire que l’invite de commandes sera affichée sans attendre la fin de la commande. Pour celà un & suivra la commande à lancer en background.
+Exemple 7
+∼> emacs &
+∼> ls -lR | gzip > ls-lR.gz &
+Au lancement d’une commande en arrière plan, avant de réafficher le l’invite de commandes, votre shell affichera une ligne de la forme : [xxx] yyy où xxx représente le numéro du « job » en « background » et yyy le pid du processus. Le numéro de job est un compteur qui est réinitialisé lorsque plus aucun job n’est exécuté en arrière plan.
+Lorsqu’une commande lancée en arrière plan se termine, on affichera :
+zzz (jobs=[xxx], pid=yyy) terminée avec status=sss
+où zzz représente la commande lancée, xxx le numéro de job, yyy le pid et sss le code de retour de la commande (la valeur -1 sera affichée si la commande s’est terminée anormalement).
+5.1 Commande myjobs
+La commande interne myjobs permettra d’afficher la liste des processus en arrière plan. L’affichage se fera de la manière suivante : [xxx] yyy Etat zzz oùxxxreprésentelenumérodejob,yyylepid,Etatl’étatduprocessusquipourraêtreEn cours d’exécution ou Stoppé et zzz la commande lancée. Un job par ligne sera affiché.
+5.2 Passer une commande de foreground à background et inversement
+Lorsqu’une commande est lancée en foreground, il est possible de l’interrompre en lui propageant le signal envoyé par Ctrl-Z (signal SIGTSTP). La commande est alors stoppée, votre shell reprend la main en indiquant que la commande zzz devient le job xxx et qu’il est Stoppé.
+Les commandes internes myfg et mybg permettent de modifier l’état d’un job. Ces commandes peuvent ad- mettre un numéro de job en paramètre. La commande mybg permettra de passer le job stoppé ou en foreground de plus grand numéro ou de numéro passé en paramètre en exécution en arrière plan. Inversement, la com- mande myfg permettra de passer le job stoppé ou en background de plus grand numéro ou de numéro passé en paramètre en exécution en premier plan. Le signal SIGCONT permet la demande de reprise d’un processus précédemment stoppé. Si la commande mybg s’applique à un numéro de processus déjà en « background », un erreur est signalée et aucune changement n’est réalisé sur les jobs.
+*/

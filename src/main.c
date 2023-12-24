@@ -14,6 +14,7 @@
 
 #include "../include/prepro_input.h"
 #include "../include/main.h"
+#include "../include/variable.h"
 
 pid_t globalPID = 0;
 
@@ -33,6 +34,7 @@ int main() {
 	char thiscmd[CMDLEN];
 	char cwd[SIZE];
 
+	init_variable();
 	for (;;) {
 //		signal(SIGINT,signalHandler);
 		if (getcwd(cwd, sizeof(cwd)) == NULL) getError("getcwd");
