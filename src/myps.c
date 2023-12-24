@@ -46,6 +46,52 @@ unsigned long uptime()
     return (unsigned long)uptime;
 }
 
+char *get_user(struct stat stats)
+{
+    struct passwd *pwd = getpwuid(stats.st_uid);
+    return pwd ? pwd->pw_name : "unknown";
+}
+
+double get_cpu_usage(unsigned long utime, unsigned long stime)
+{
+    unsigned long total_time = utime + stime;
+    unsigned long seconds = uptime();
+    return 100.0 * ((total_time / sysconf(_SC_CLK_TCK)) / seconds);
+}
+
+double get_mem_usage(unsigned long rss)
+{
+    unsigned long total_mem = total_memory();
+    return 100.0 * rss / total_mem;
+}
+
+void print_process_info(char *user, long pid, double cpu_usage, double mem_usage, unsigned long vsz, unsigned long rss, char stat, char *start_str, unsigned long hours, unsigned long minutes, unsigned long time_seconds, char *command)
+{
+    printf("%-8s %-5ld %-5.1f %-5.1f %-8lu %-8lu %-8s %-5c %-8s %02lu:%02lu:%02lu %-s\n", user, pid, cpu_usage, mem_usage, vsz * getpagesize() / 1024, rss * getpagesize() / 1024, "??", stat, start_str, hours, minutes, time_seconds, command);
+}
+
+char *get_start_time(unsigned long starttime)
+{
+    time_t boot_time = time(NULL) - uptime();
+    time_t start_time = boot_time + starttime / sysconf(_SC_CLK_TCK);
+    struct tm *tm_info = localtime(&start_time);
+
+    static char start_str[6];
+    snprintf(start_str, sizeof(start_str), "%02d.%02d", tm_info->tm_mon + 1, tm_info->tm_mday);
+
+    return start_str;
+}
+
+void get_time(unsigned long utime, unsigned long stime, unsigned long *hours, unsigned long *minutes, unsigned long *seconds)
+{
+    unsigned long total_time = utime + stime;
+    total_time = total_time / sysconf(_SC_CLK_TCK); // Convert to seconds
+
+    *hours = total_time / 3600;
+    *minutes = (total_time % 3600) / 60;
+    *seconds = total_time % 60;
+}
+
 void command_myps()
 {
     DIR *dir;
@@ -77,8 +123,7 @@ void command_myps()
                 continue;
             }
 
-            struct passwd *pwd = getpwuid(stats.st_uid);
-            char *user = pwd ? pwd->pw_name : "unknown";
+            char *user = get_user(stats);
 
             FILE *stat_file;
             char stat_path[256];
@@ -104,10 +149,7 @@ void command_myps()
                 continue;
             }
 
-            // Calculate %CPU
-            unsigned long total_time = utime + stime;
-            unsigned long seconds = uptime();
-            double cpu_usage = 100.0 * ((total_time / sysconf(_SC_CLK_TCK)) / seconds);
+            double cpu_usage = get_cpu_usage(utime, stime);
 
             unsigned long vsz, rss;
             FILE *statm;
@@ -118,24 +160,12 @@ void command_myps()
                 fscanf(statm, "%lu %lu", &vsz, &rss);
                 fclose(statm);
             }
-            rss = rss * getpagesize() / 1024; // Convert to KB
-            unsigned long total_mem = total_memory();
-            double mem_usage = 100.0 * rss / total_mem;
-            printf("%-8s %-5ld %-5.1f %-5.1f %-8lu %-8lu %-8s %-5c", user, pid, cpu_usage, mem_usage, vsz * getpagesize() / 1024, rss * getpagesize() / 1024, "??", stat);
+            double mem_usage = get_mem_usage(rss);
+            char *start_str = get_start_time(starttime);
+            unsigned long hours, minutes, time_seconds;
+            get_time(utime, stime, &hours, &minutes, &time_seconds);
 
-            // Calculate TIME
-            unsigned long total_time_seconds = total_time / sysconf(_SC_CLK_TCK);
-            unsigned long hours = total_time_seconds / 3600;
-            unsigned long minutes = (total_time_seconds % 3600) / 60;
-            unsigned long time_seconds = total_time_seconds % 60;
-
-            // Calculate START time
-            time_t start_time = time(NULL) - starttime / sysconf(_SC_CLK_TCK);
-            struct tm *tm_info = localtime(&start_time);
-            char start_str[9];
-            strftime(start_str, sizeof(start_str), "%m.%d", tm_info);
-
-            printf(" %-8s %02lu:%02lu:%02lu %-s\n", start_str, hours, minutes, time_seconds, command);
+            print_process_info(user, pid, cpu_usage, mem_usage, vsz, rss, stat, start_str, hours, minutes, time_seconds, command);
         }
     }
 
