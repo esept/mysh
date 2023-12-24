@@ -1,155 +1,141 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <string.h>
-#include <ctype.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <time.h>
 #include "myps.h"
-#include "main.h"
 
-void truncateString(char *str, size_t maxLen) {
-    size_t len = strlen(str);
-    if (len > maxLen) {
-        memmove(str + maxLen - 3, "..\0", 3);
+unsigned long total_memory()
+{
+    unsigned long mem;
+    FILE *f = fopen("/proc/meminfo", "r");
+    if (f == NULL)
+    {
+        perror("fopen");
+        return 0;
     }
-}
-
-void truncateFloat(float *value, size_t maxLen) {
-    char str[20];
-    snprintf(str, sizeof(str), "%.1f", *value);
-
-    size_t len = strlen(str);
-    if (len > maxLen) {
-        snprintf(str + maxLen - 3, sizeof(str) - maxLen + 2, "..");
-        sscanf(str, "%f", value);
+    if (fscanf(f, "MemTotal: %lu kB", &mem) != 1)
+    {
+        perror("fscanf");
+        fclose(f);
+        return 0;
     }
+    fclose(f);
+    return mem;
 }
 
-void truncateUnsignedLong(unsigned long *value, size_t maxLen) {
-    char str[20];
-    snprintf(str, sizeof(str), "%lu", *value);
-
-    size_t len = strlen(str);
-    if (len > maxLen) {
-        snprintf(str + maxLen - 3, sizeof(str) - maxLen + 3, "..");
-        sscanf(str, "%lu", value);
+unsigned long uptime()
+{
+    double uptime;
+    FILE *f = fopen("/proc/uptime", "r");
+    if (f == NULL)
+    {
+        perror("fopen");
+        return 0;
     }
+    if (fscanf(f, "%lf", &uptime) != 1)
+    {
+        perror("fscanf");
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    return (unsigned long)uptime;
 }
 
-void printHeader() {
-    printf("%-15s %-8s %-8s %-8s %-8s %-8s %-8s %-8s %-8s %s\n",
-           "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "COMMAND");
-}
-
-void printProcessInfo(struct ProcessInfo *info) {
-    truncateString(info->user, MAX_DISPLAY_LEN);
-	truncateFloat(&info->cpu, MAX_DISPLAY_LEN_FOR_FLOAT_AND_UNSIGNED);
-    truncateFloat(&info->mem, MAX_DISPLAY_LEN_FOR_FLOAT_AND_UNSIGNED);
-    truncateUnsignedLong(&info->vsz, MAX_DISPLAY_LEN_FOR_FLOAT_AND_UNSIGNED);
-    truncateUnsignedLong(&info->rss, MAX_DISPLAY_LEN_FOR_FLOAT_AND_UNSIGNED);
-    truncateString(info->tty, MAX_DISPLAY_LEN);
-    truncateString(info->stat, MAX_DISPLAY_LEN);
-    truncateString(info->start, MAX_DISPLAY_LEN);
-    truncateString(info->command, MAX_DISPLAY_LEN);
-
-    printf("%-15s %-8d %-8.1f %-8.1f %-8lu %-8lu %-8s %-8s %-8s %s\n",
-           info->user, info->pid, info->cpu, info->mem, info->vsz, info->rss,
-           info->tty, info->stat, info->start, info->command);
-}
-
-void command_myps() {
+void command_myps()
+{
     DIR *dir;
-    struct dirent *ent;
-    FILE *file;
-    char path[MAX_LINE_LEN];
-    char line[MAX_LINE_LEN];
+    struct dirent *entry;
 
     dir = opendir("/proc");
-    if (dir == NULL) {
-        getError("opendir");
+    if (!dir)
+    {
+        perror("opendir");
+        return;
     }
 
-    printHeader();
+    printf("%-8s %-5s %-5s %-5s %-8s %-8s %-8s %-5s %-8s %-8s %-8s\n",
+           "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", "COMMAND");
 
-    while ((ent = readdir(dir)) != NULL) {
-        if (isdigit(ent->d_name[0])) {
-            snprintf(path, sizeof(path), "/proc/%s/stat", ent->d_name);
-            file = fopen(path, "r");
+    while ((entry = readdir(dir)) != NULL)
+    {
+        char *endptr;
+        long pid = strtol(entry->d_name, &endptr, 10);
+        if (*endptr == '\0')
+        {
+            char path[256];
+            struct stat stats;
 
-            if (file != NULL) {
-                struct ProcessInfo info;
-
-                if (fgets(line, sizeof(line), file) != NULL) {
-                    sscanf(line, "%s %d %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %f %f", 
-                           info.stat, &info.pid, &info.cpu, &info.mem);
-                }
-
-                snprintf(path, sizeof(path), "/proc/%s/status", ent->d_name);
-                file = fopen(path, "r");
-
-                if (file != NULL) {
-                    while (fgets(line, sizeof(line), file) != NULL) {
-                        if (strncmp(line, "Name:", 5) == 0) {
-                            sscanf(line, "Name:\t%s", info.command);
-                            truncateString(info.command, MAX_DISPLAY_LEN);
-                        } else if (strncmp(line, "Uid:", 4) == 0) {
-                            int uid;
-                            sscanf(line, "Uid:\t%d", &uid);
-                            snprintf(path, sizeof(path), "/proc/%s/cmdline", ent->d_name);
-                            FILE *cmdline = fopen(path, "r");
-                            if (cmdline != NULL) {
-                                fscanf(cmdline, "%s", info.user);
-                                fclose(cmdline);
-                            }
-                        }
-                    }
-					// while (fgets(line, sizeof(line), file) != NULL) {
-                    //     if (strncmp(line, "Uid:", 4) == 0) {
-                    //         int uid;
-                    //         sscanf(line, "Uid:\t%d", &uid);
-                    //         struct passwd *pw = getpwuid(uid);
-                    //         if (pw != NULL) {
-                    //             strncpy(info.user, pw->pw_name, sizeof(info.user) - 1);
-                    //             info.user[sizeof(info.user) - 1] = '\0';
-                    //             truncateString(info.user, MAX_DISPLAY_LEN);
-                    //         } else {
-                    //             // Gérer le cas où getpwuid échoue
-                    //             strncpy(info.user, "UNKNOWN", sizeof(info.user) - 1);
-                    //             info.user[sizeof(info.user) - 1] = '\0';
-                    //         }
-                    //     }
-                    // }
-                    fclose(file);
-
-                    snprintf(path, sizeof(path), "/proc/%s/stat", ent->d_name);
-                    file = fopen(path, "r");
-
-                    if (file != NULL) {
-                        fgets(line, sizeof(line), file);
-                        sscanf(line, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %s %*s", info.tty);
-                        fclose(file);
-                    }
-
-                    snprintf(path, sizeof(path), "/proc/%s/stat", ent->d_name);
-                    file = fopen(path, "r");
-
-                    if (file != NULL) {
-                        fgets(line, sizeof(line), file);
-                        sscanf(line, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %s", info.start);
-                        fclose(file);
-                    }
-
-                    snprintf(path, sizeof(path), "/proc/%s/stat", ent->d_name);
-                    file = fopen(path, "r");
-
-                    if (file != NULL) {
-                        fgets(line, sizeof(line), file);
-                        sscanf(line, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %s", info.time);
-                        fclose(file);
-                    }
-
-                    printProcessInfo(&info);
-                }
+            snprintf(path, sizeof(path), "/proc/%ld", pid);
+            if (stat(path, &stats) == -1)
+            {
+                perror("stat");
+                continue;
             }
+
+            struct passwd *pwd = getpwuid(stats.st_uid);
+            char *user = pwd ? pwd->pw_name : "unknown";
+
+            FILE *stat_file;
+            char stat_path[256];
+            snprintf(stat_path, sizeof(stat_path), "/proc/%ld/stat", pid);
+
+            stat_file = fopen(stat_path, "r");
+            if (!stat_file)
+            {
+                perror("fopen");
+                continue;
+            }
+
+            char command[256];
+            char stat;
+            unsigned long utime, stime, cutime, cstime, starttime;
+            int result = fscanf(stat_file, "%*d %s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %lu %lu %lu %lu %*d %*d %*d %*d %*d %*d %lu", command, &stat, &utime, &stime, &cutime, &cstime, &starttime);
+
+            fclose(stat_file);
+
+            if (result != 7)
+            {
+                perror("fscanf");
+                continue;
+            }
+
+            // Calculate %CPU
+            unsigned long total_time = utime + stime;
+            unsigned long seconds = uptime();
+            double cpu_usage = 100.0 * ((total_time / sysconf(_SC_CLK_TCK)) / seconds);
+
+            unsigned long vsz, rss;
+            FILE *statm;
+            snprintf(path, sizeof(path), "/proc/%ld/statm", pid);
+            statm = fopen(path, "r");
+            if (statm)
+            {
+                fscanf(statm, "%lu %lu", &vsz, &rss);
+                fclose(statm);
+            }
+            rss = rss * getpagesize() / 1024; // Convert to KB
+            unsigned long total_mem = total_memory();
+            double mem_usage = 100.0 * rss / total_mem;
+            printf("%-8s %-5ld %-5.1f %-5.1f %-8lu %-8lu %-8s %-5c", user, pid, cpu_usage, mem_usage, vsz * getpagesize() / 1024, rss * getpagesize() / 1024, "??", stat);
+
+            // Calculate TIME
+            unsigned long total_time_seconds = total_time / sysconf(_SC_CLK_TCK);
+            unsigned long hours = total_time_seconds / 3600;
+            unsigned long minutes = (total_time_seconds % 3600) / 60;
+            unsigned long time_seconds = total_time_seconds % 60;
+
+            // Calculate START time
+            time_t start_time = time(NULL) - starttime / sysconf(_SC_CLK_TCK);
+            struct tm *tm_info = localtime(&start_time);
+            char start_str[9];
+            strftime(start_str, sizeof(start_str), "%m.%d", tm_info);
+
+            printf(" %-8s %02lu:%02lu:%02lu %-s\n", start_str, hours, minutes, time_seconds, command);
         }
     }
 
