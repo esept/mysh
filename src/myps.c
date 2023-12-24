@@ -90,7 +90,7 @@ void command_myps() {
                     while (fgets(line, sizeof(line), file) != NULL) {
                         if (strncmp(line, "Name:", 5) == 0) {
                             sscanf(line, "Name:\t%s", info.command);
-                            truncateString(info.command, MAX_DISPLAY_LEN); // Tronquer le chemin
+                            truncateString(info.command, MAX_DISPLAY_LEN);
                         } else if (strncmp(line, "Uid:", 4) == 0) {
                             int uid;
                             sscanf(line, "Uid:\t%d", &uid);
@@ -154,5 +154,4 @@ void command_myps() {
     }
 
     closedir(dir);
-    return;
 }
