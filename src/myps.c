@@ -1,6 +1,6 @@
 /**
  * @file myps.c
- * @brief Implementation of functions related to process status.
+ * @brief Implementation of functions related to retrieve current processes informations.
  */
 
 #include <dirent.h>
@@ -12,6 +12,12 @@
 #include <sys/stat.h>
 #include <time.h>
 #include "myps.h"
+#include "error_handler.h"
+
+void init_constants() {
+    clk_tck = sysconf(_SC_CLK_TCK);
+    page_size = getpagesize();
+}
 
 unsigned long total_memory()
 {
@@ -19,15 +25,11 @@ unsigned long total_memory()
     FILE *f = fopen("/proc/meminfo", "r");
     if (f == NULL)
     {
-        perror("fopen");
-        return 0;
+        handleError(FOPEN_ERROR);
     }
-    if (fscanf(f, "MemTotal: %lu kB", &mem) != 1)
-    {
-        perror("fscanf");
-        fclose(f);
-        return 0;
-    }
+    char buffer[256];
+    fread(buffer, 1, sizeof(buffer), f);
+    sscanf(buffer, "MemTotal: %lu kB", &mem);
     fclose(f);
     return mem;
 }
@@ -38,15 +40,11 @@ unsigned long uptime()
     FILE *f = fopen("/proc/uptime", "r");
     if (f == NULL)
     {
-        perror("fopen");
-        return 0;
+        handleError(FOPEN_ERROR);
     }
-    if (fscanf(f, "%lf", &uptime) != 1)
-    {
-        perror("fscanf");
-        fclose(f);
-        return 0;
-    }
+    char buffer[256];
+    fread(buffer, 1, sizeof(buffer), f);
+    sscanf(buffer, "%lf", &uptime);
     fclose(f);
     return (unsigned long)uptime;
 }
@@ -61,18 +59,24 @@ double get_cpu_usage(unsigned long utime, unsigned long stime)
 {
     unsigned long total_time = utime + stime;
     unsigned long seconds = uptime();
-    return 100.0 * ((total_time / sysconf(_SC_CLK_TCK)) / seconds);
+    return 100.0 * ((total_time / clk_tck) / seconds);
 }
 
 double get_mem_usage(unsigned long rss)
 {
     unsigned long total_mem = total_memory();
-    return 100.0 * rss / total_mem;
+    unsigned long rss_kb = rss * page_size / 1024; // Convert rss from pages to kilobytes
+    return 100.0 * rss_kb / total_mem;
 }
 
-void print_process_info(char *user, long pid, double cpu_usage, double mem_usage, unsigned long vsz, unsigned long rss, char stat, char *start_str, unsigned long hours, unsigned long minutes, unsigned long time_seconds, char *command)
+void print_process_info(char *user, long pid, double cpu_usage, double mem_usage, unsigned long vsz, unsigned long rss, char stat, char *start_str, unsigned long hours, unsigned long minutes, unsigned long time_seconds, char *command, int setGreenColor)
 {
-    printf("%-8s %-5ld %-5.1f %-5.1f %-8lu %-8lu %-8s %-5c %-8s %02lu:%02lu:%02lu %-s\n", user, pid, cpu_usage, mem_usage, vsz * getpagesize() / 1024, rss * getpagesize() / 1024, "??", stat, start_str, hours, minutes, time_seconds, command);
+    if (setGreenColor%2 == 0) {
+        printf(VERT("%-8s %-5ld %-5.1f %-5.1f %-8lu %-8lu %-8s %-5c %-8s %02lu:%02lu:%02lu %-s\n"), user, pid, cpu_usage, mem_usage, vsz * page_size / 1024, rss * page_size / 1024, "?", stat, start_str, hours, minutes, time_seconds, command);
+        return;
+    }
+
+    printf("%-8s %-5ld %-5.1f %-5.1f %-8lu %-8lu %-8s %-5c %-8s %02lu:%02lu:%02lu %-s\n", user, pid, cpu_usage, mem_usage, vsz * page_size / 1024, rss * page_size / 1024, "?", stat, start_str, hours, minutes, time_seconds, command);
 }
 
 char *get_start_time(unsigned long starttime)
@@ -105,13 +109,14 @@ void command_myps()
     dir = opendir("/proc");
     if (!dir)
     {
-        perror("opendir");
-        return;
+        handleError(OPENDIR_ERROR);
     }
+    init_constants();
 
     printf("%-8s %-5s %-5s %-5s %-8s %-8s %-8s %-5s %-8s %-8s %-8s\n",
            "USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "STAT", "START", "TIME", "COMMAND");
 
+    int cpt = 0;
     while ((entry = readdir(dir)) != NULL)
     {
         char *endptr;
@@ -124,8 +129,7 @@ void command_myps()
             snprintf(path, sizeof(path), "/proc/%ld", pid);
             if (stat(path, &stats) == -1)
             {
-                perror("stat");
-                continue;
+                handleError(STAT_ERROR);
             }
 
             char *user = get_user(stats);
@@ -137,8 +141,7 @@ void command_myps()
             stat_file = fopen(stat_path, "r");
             if (!stat_file)
             {
-                perror("fopen");
-                continue;
+                handleError(FOPEN_ERROR);
             }
 
             char command[256];
@@ -150,8 +153,7 @@ void command_myps()
 
             if (result != 7)
             {
-                perror("fscanf");
-                continue;
+                handleError(FSCANF_ERROR);
             }
 
             double cpu_usage = get_cpu_usage(utime, stime);
@@ -170,7 +172,7 @@ void command_myps()
             unsigned long hours, minutes, time_seconds;
             get_time(utime, stime, &hours, &minutes, &time_seconds);
 
-            print_process_info(user, pid, cpu_usage, mem_usage, vsz, rss, stat, start_str, hours, minutes, time_seconds, command);
+            print_process_info(user, pid, cpu_usage, mem_usage, vsz, rss, stat, start_str, hours, minutes, time_seconds, command, cpt++);
         }
     }
 

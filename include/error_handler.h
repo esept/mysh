@@ -14,15 +14,18 @@ typedef enum
     INVALID_ARGUMENT_ERROR, // Error code for invalid arguments
     MALLOC_ERROR,               
     REALLOC_ERROR,          
-    NOT_SUPPORTED_ERROR,
     FORK_ERROR,
     EXEC_ERROR,
     EXECVP_ERROR,
     FGETS_ERROR,
     GETCWD_ERROR,
-    OPENDIR_ERROR,
     CLOSEDIR_ERROR,
-    LSTAT_ERROR,
+    FOPEN_ERROR,
+    FSCANF_ERROR,
+    OPENDIR_ERROR,
+    STAT_ERROR,
+    UNKNOW_ERROR,
+
 } ErrorCode;
 
 void handleError(ErrorCode error);

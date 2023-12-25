@@ -34,12 +34,32 @@ char *getErrorMessage(ErrorCode errCode)
     switch (errCode)
     {
     case INVALID_ARGUMENT_ERROR:
-        return "Invalid argument";
+        return "invalid argument";
     case MALLOC_ERROR:
-        return "Malloc";
+        return "malloc";
     case REALLOC_ERROR:
-        return "Realloc";
+        return "realloc";
+    case FORK_ERROR:
+        return "fork";
+    case EXEC_ERROR:
+        return "exec";
+    case EXECVP_ERROR:
+        return "execvp";
+    case FGETS_ERROR:
+        return "fgets";
+    case GETCWD_ERROR:
+        return "realloc";
+    case CLOSEDIR_ERROR:
+        return "invalid argument";
+    case FOPEN_ERROR:
+        return "malloc";
+    case FSCANF_ERROR:
+        return "realloc";
+    case OPENDIR_ERROR:
+        return "malloc";
+    case STAT_ERROR:
+        return "realloc";
     default:
-        return "Unknown";
+        return "unknown";
     }
 }

@@ -5,6 +5,16 @@
 #ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_
 #define EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_
 
+#include <stdio.h>
+
+static long clk_tck;
+static long page_size;
+
+/**
+ * Initializes the constants used in the program.
+ */
+void init_constants();
+
 /**
  * Calculates the total memory available on the system.
  *
@@ -60,7 +70,9 @@ double get_mem_usage(unsigned long rss);
  * @param time_seconds The CPU usage seconds.
  * @param command The command associated with the process.
  */
-void print_process_info(char *user, long pid, double cpu_usage, double mem_usage, unsigned long vsz, unsigned long rss, char stat, char *start_str, unsigned long hours, unsigned long minutes, unsigned long time_seconds, char *command);
+void print_process_info(char *user, long pid, double cpu_usage, double mem_usage, unsigned long vsz,
+                        unsigned long rss, char stat, char *start_str, unsigned long hours, unsigned long minutes,
+                        unsigned long time_seconds, char *command, int setGreenColor);
 
 /**
  * Retrieves the start time of a process.
@@ -86,4 +98,4 @@ void get_time(unsigned long utime, unsigned long stime, unsigned long *hours, un
  */
 void command_myps();
 
-#endif //EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_
+#endif // EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_

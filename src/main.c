@@ -37,15 +37,14 @@ void signalHandler(int sig) {
     char c;
     signal(sig, SIG_IGN);
     printf(" Do you really want to quit? [y/n] ");
-    c = tolower(getchar());
-
-	// fflush(stdin); // Have to press enter 2 times (instead of one) when not 'y'
+    scanf(" %c", &c);
+    c = tolower(c);
 
     if (c != 'y') {
         signal(SIGINT, signalHandler);
-		return;
+        return;
     } 
-	killBackgroundProcesses();
+    killBackgroundProcesses();
     exit(EXIT_SUCCESS);
 }
 
