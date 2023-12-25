@@ -120,6 +120,8 @@ int process(int argc, char *argv[], int start, int end) {
 	}else if(strcmp(cmd_argv[0],"myls") == 0){
 		return_status = command_myls(cmd_argv,cmd_argc);
 	}else if(strcmp(cmd_argv[0],"exit") == 0){
+		clean_env_variable();
+		clean_local_variable();
 		exit(EXIT_SUCCESS);
 	} else if(strcmp(cmd_argv[0],"status") == 0){
 		printf("last status = %d",status);

@@ -35,6 +35,8 @@ int main() {
 	char cwd[SIZE];
 
 	init_variable();
+//	init_env_variable();
+	init_sharedMemeory();
 	for (;;) {
 //		signal(SIGINT,signalHandler);
 		if (getcwd(cwd, sizeof(cwd)) == NULL) getError("getcwd");
@@ -46,4 +48,5 @@ int main() {
 		size_t len = strlen(thiscmd);
 		preprocess(thiscmd, len);
 	}
+
 }
