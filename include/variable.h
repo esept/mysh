@@ -5,6 +5,8 @@
 #ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_VARIABLE_H_
 #define EDU_1S_C_PROJECT_MYSHELL_SRC_VARIABLE_H_
 
+#include <pthread.h>
+
 #define MAXVAR 100
 #define MAXENVVAR 20
 

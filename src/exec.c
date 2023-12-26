@@ -35,8 +35,11 @@ int command_cd(char *path){
 	if (path == NULL){
 		path = getenv("HOME");
 	}
-	if (chdir(path) != 0) getError("chdir");
-	return 1;
+	if (chdir(path) != 0) {
+		getError("chdir");
+		return -1;
+	};
+	return 0;
 }
 
 int cmd_pipe(char *argv[], int argc) {
@@ -107,7 +110,7 @@ int cmd_pipe(char *argv[], int argc) {
 		wait(NULL);
 	}
 
-	return 1;
+	return 0;
 } // without builtin function
 
 int cmd_pipe2(char *argv[], int argc) {
@@ -186,7 +189,7 @@ int cmd_pipe2(char *argv[], int argc) {
 		wait(NULL);
 	}
 
-	return 1;
+	return 0;
 }
 
 int cmd_redi(char *argv[], int argc) {

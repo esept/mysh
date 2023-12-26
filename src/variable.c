@@ -59,7 +59,7 @@ void init_variable() {
 
 
 int set_variable(int argc, char *argv[]) {
-	int rt_value = 1;
+	int rt_value = 0;
 
 	for (int i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "set") == 0 && i + 1 < argc) {
@@ -69,7 +69,7 @@ int set_variable(int argc, char *argv[]) {
 				rt_value = set_local_var(var_name, var_value);
 			} else{
 				perror("too few info");
-				rt_value = 0;
+				rt_value = -1;
 			}
 			break;
 		} else if (strcmp(argv[i], "setenv") == 0 && i + 1 < argc) {
@@ -79,20 +79,20 @@ int set_variable(int argc, char *argv[]) {
 				rt_value = set_env_var(var_name, var_value);
 			}else{
 				perror("too few info");
-				rt_value = 0;
+				rt_value = -1;
 			}
 			break;
 		} else if (strcmp(argv[i], "unset") == 0 && i + 1 < argc) {
 			rt_value = unset_local_var(argv[i + 1]);
 
-			if (rt_value == 0){
+			if (rt_value != 0){
 				fprintf(stderr,"NO such variable");
 			}
 			break;
 		}else if (strcmp(argv[i], "unsetenv") == 0 && i + 1 < argc){
 			rt_value = unset_env_var(argv[i + 1]);
 
-			if (rt_value == 0){
+			if (rt_value != 0){
 				fprintf(stderr,"NO such variable");
 			}
 			break;
@@ -150,17 +150,17 @@ int set_local_var(char *var_name, char *var_value) {
 		if (strcmp(Vars[i].var_name, var_name) == 0) {
 //			printf("change %s from %s to %s",Vars[i].var_name,Vars[i].value,var_value);
 			strcpy(Vars[i].value, var_value);
-			return 1;
+			return 0;
 		}
 	}
 	if (nbVal >= MAXVAR) {
 		perror("Too many variables");
-		return 0;
+		return -1;
 	}
 	strcpy(Vars[nbVal].var_name, var_name);
 	strcpy(Vars[nbVal].value, var_value);
 	nbVal++;
-	return 1;
+	return 0;
 } // set local variable commande
 
 
@@ -186,11 +186,11 @@ int unset_local_var(char *var_name) {
 			Vars[nbVal - 1].var_name[0] = '\0';
 			Vars[nbVal - 1].value[0] = '\0';
 			nbVal--;
-			return 1;
+			return 0;
 		}
 	}
 //	perror("NO SUCH variable");
-	return 0; // 如果找不到变量
+	return -1; // 如果找不到变量
 } // unset local variable commande
 
 void init_sharedMemeory(){
@@ -222,7 +222,7 @@ int set_env_var(char *var_name, char *var_value) {
 //			printf("set env var %s = %s",var_name,var_name);
 			pthread_rwlock_unlock(&shared->lock);
 
-			return 1;
+			return 0;
 		}
 	}
 	for (i = 0; i < MAXENVVAR; ++i) {
@@ -232,12 +232,12 @@ int set_env_var(char *var_name, char *var_value) {
 			pthread_rwlock_unlock(&shared->lock);
 
 //			printf("set env var %s = %s",var_name,var_name);
-			return 1;
+			return 0;
 		}
 	}
 	fprintf(stderr,"NO more space avaliable");
 	pthread_rwlock_unlock(&shared->lock);
-	return 0;
+	return -1;
 }
 
 int unset_env_var(char *var_name){
@@ -246,11 +246,11 @@ int unset_env_var(char *var_name){
 		if (strcmp(shared->eVars[i].var_name,var_name) == 0){
 			shared->eVars[i].var_name[0] = '\0';
 			shared->eVars[i].value[0] = '\0';
-			return 1;
+			return 0;
 		}
 	}
 //	fprintf(stderr,"NO such variable");
-	return 0;
+	return -1;
 }
 
 char *get_env_var(char *var_name){

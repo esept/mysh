@@ -21,6 +21,7 @@ int getop(char **input, int a, int len) {
 	return 0;
 }
 
+
 void preprocess(char *input, int length) {
 	int i;
 	if (length > 0 && input[length - 1] == '\n') {
@@ -28,40 +29,53 @@ void preprocess(char *input, int length) {
 	}
 	int argc, execute_next = 1, lop = 0;
 	char *argv[CMDLEN];
-	i = 0;
 	char *rest_cmd = input;
 	char *cmd_seg;
 	int logop[CMDLEN];
 	int posop;
+	int last_status = 0;  // 上一个命令的返回状态
+	int status = 0;       // 当前命令的返回状态
+
 	while ((cmd_seg = strtok_r(rest_cmd, ";", &rest_cmd))) {
+		i = 0;  // 重置 i 为每个命令段的起始位置
 		argc = split_space(cmd_seg, argv);
+
+		// get logic operator position
 		posop = getop(argv, 0, argc);
-		while (posop != 0) {
+		while (posop != 0 && i < CMDLEN - 1) {
 			logop[i++] = posop;
 			posop = getop(argv, posop, argc);
 		}
+		logop[i] = argc;
 
-		int last_status = 0; // 上一个命令的返回状态
-		logop[i++] = posop;
-		if (i != 0) { // 如果有逻辑操作
-			for (int j = 0; j < i; j++) {
-				if (j == 0 || (strcmp(argv[logop[j-1]],"&&") == 0 && last_status == 0) || ( strcmp(argv[logop[j-1]],"||") == 0 && last_status != 0)) {
-					int start = (j == 0) ? 0 : logop[j-1] + 1;
-					int end = (j < i - 1) ? logop[j] : argc;
+		// check have logop or not
+		if (i > 0) {
+			// have logop
+			int start = 0;
+			for (int j = 0; j <= i; j++) {
+				int end = (j < i) ? logop[j] : argc;
+				if (j == 0 ||
+						(strcmp(argv[logop[j - 1]], "&&") == 0 && last_status == 0) ||
+						(strcmp(argv[logop[j - 1]], "||") == 0 && last_status != 0)) {
+
 					last_status = process(argc, argv, start, end);
 					status = last_status;
 				}
+				start = end + 1;
 			}
 		} else {
+			// dont have logop
 			last_status = process(argc, argv, 0, argc);
 			status = last_status;
 		}
 	}
 }
 
+
 int process(int argc, char *argv[], int start, int end) {
 	char *cmd_argv[CMDLEN];
-	int cmd_argc = 0, return_status ,i;
+	int cmd_argc = 0;
+	int return_status = 0,i;
 
 	for (i = start; i < end && i < argc; i++) {
 		if (strcmp(argv[i], "&&") != 0 && strcmp(argv[i], "||") != 0) {
@@ -69,7 +83,6 @@ int process(int argc, char *argv[], int start, int end) {
 		}
 	}
 	cmd_argv[cmd_argc] = NULL;
-
 
 	for (i = 0; i < cmd_argc; ++i) {
 		if (strcmp(cmd_argv[i],"|") == 0){ // pipe |
@@ -80,16 +93,15 @@ int process(int argc, char *argv[], int start, int end) {
 	}
 
 	char *variable_tab[] = {
-			"set","setenv","unset"
+			"set","setenv","unset","unsetenv"
 	};
 	for (i = 0; i < cmd_argc; ++i) {
-		for (int j = 0; j < 3; ++j) {
+		for (int j = 0; j < 4; ++j) {
 			if (strcmp(cmd_argv[i],variable_tab[j]) == 0){
 				return_status = set_variable(cmd_argc,cmd_argv);
 				return return_status;
 			}
 		}
-
 	}
 
 	for (i = 0;  i<cmd_argc ; i++) {
@@ -100,7 +112,6 @@ int process(int argc, char *argv[], int start, int end) {
 			}
 		}
 	}
-
 
 	char *redirect[] = {
 			">",">>","2>","2>>",">&",">&>","<"
@@ -131,6 +142,8 @@ int process(int argc, char *argv[], int start, int end) {
 	}
 	return return_status;
 }
+
+
 
 int split_space(char *cmd, char *args[]) {
 	int i = 0, j = 0;

@@ -39,7 +39,7 @@ int command_myls(char *path[], int length) {
 			}
 		}
 	}
-	return 1;
+	return 0;
 }
 
 void get_stat(char *file_path,int is_all,int rec) {
@@ -92,8 +92,15 @@ void get_stat(char *file_path,int is_all,int rec) {
 		color = EXECUTABLE_COLOR;
 	}
 
+	char *filename = strrchr(file_path, '/');
+	if (filename == NULL) {
+		filename = file_path;
+	} else {
+		filename++; // 跳过 '/'
+	}
+
 	printf(" %lu \t%s \t%s \t%lld \t%s", (unsigned long)(&mystat)->st_nlink, pw->pw_name, gr->gr_name, (long long)(&mystat)->st_size, datestring);
-	printf("\t%s%s%s\n", color, file_path, RESET_COLOR);
+	printf("\t%s%s%s\n", color, filename, RESET_COLOR);
 
 }
 
