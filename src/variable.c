@@ -17,33 +17,6 @@
 #include "../include/variable.h"
 #include "../include/main.h"
 #include "../include/exec.h"
-/**
-* 6 Les variables
-Pour être un interpréteur de commandes qui se respecte, votre shell doit intégrer la prise en charge de variables. Deux types de variables sont à gérer : les variables locales et d’environnement.
-6.1 Les variables d’environnment
-Les variables d’environnement sont stockées dans une zone de mémoire partagée qui est créée par le premier exemplaire de votre shell qui tourne à un instant donné et est initialisée avec toutes les variables définies dans le tableau envp (int main(int argc,char *argv[],char *envp[])). Le dernier exemplaire de votre shell qui tourne à un instant donné doit détruire cet espace partagé avant de mourir.
-Cette zone de mémoire partagée est à gérer comme une mémoire par subdivison.
-La zone de mémoire partagée est une zone de mémoire à accès concurrents avec plusieurs lectures simul- tanées possibles mais 1 seule écriture possible à un instant donné. L’implémentation demandée doit donner la priorité à l’écriture.
-
-6.2 Les variables locales
-Elles sont locales à votre shell, c’est-à-dire que dex exemplaires de votre shell peuvent avoir un même nom de variable avec une valeur différente dans chaque shell.
-6.3 Utilisation des variables
-Pour accéder à une variable sur la une ligne de commande, on utilisera le symbole $ devant son nom.
-Si une variable de nom nnn existe à la fois en locale en environnement, la variable locale est prioritaire. La
-valeur de cette dernière sera donc utilisée.
-Pour définir la valeur d’une variable on utlisera respectivement les commandes internes set et setenv pour les variables locales et d’environnment. Ces commandes admettent un paramètre de la forme : var=valeur où var représente la variable à définir et valeur la valeur à lui associer. Si ces commandes sont lancées sans pa- ramètre, elles afficheront les respectivement les valeurs de l’ensemble des variables locales et d’environnment.
-Les commandes internes unset et unsetenv admettent obligatoirement un paramètre qui est le nom de la variable à supprimer et ont pour objectif de supprimer respectivement une variable locale ou d’environnement.
-Exemple 8
-∼>set a=foo ∼>echo $a
-foo
-∼>setenv b=duc ∼>mysh
-∼>echo $b
-duc
-∼>set a=bar ∼>set b=tmp ∼>echo $b
-tmp
-∼>setenv b=$a ∼>exit
-∼>echo $b+$a bar+foo ∼>unset $a
-*/
 
 int nbVal = 0;
 int nbEnvVal = 0;
@@ -64,7 +37,7 @@ int set_variable(int argc, char *argv[]) {
 	for (int i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "set") == 0 && i + 1 < argc) {
 			char *var_value;
-			char *var_name = strtok_r(argv[i + 1], "=", &var_value);
+			char *var_name = strtok_r(argv[i + 1], "=", &var_value); // split `=`
 			if (var_name != NULL && var_value != NULL) {
 				rt_value = set_local_var(var_name, var_value);
 			} else{
@@ -74,7 +47,7 @@ int set_variable(int argc, char *argv[]) {
 			break;
 		} else if (strcmp(argv[i], "setenv") == 0 && i + 1 < argc) {
 			char *var_value;
-			char *var_name = strtok_r(argv[i + 1], "=", &var_value);
+			char *var_name = strtok_r(argv[i + 1], "=", &var_value); // split `=`
 			if (var_name != NULL && var_value != NULL) {
 				rt_value = set_env_var(var_name, var_value);
 			}else{
@@ -177,19 +150,18 @@ char * get_local_var(char *var_name) {
 int unset_local_var(char *var_name) {
 	for (int i = 0; i < nbVal; i++) {
 		if (strcmp(Vars[i].var_name, var_name) == 0) {
-			// 找到变量，将后面的变量向前移动一位
+			// found variable and move forward each variable
 			for (int j = i; j < nbVal - 1; j++) {
 				strcpy(Vars[j].var_name, Vars[j + 1].var_name);
 				strcpy(Vars[j].value, Vars[j + 1].value);
 			}
-			// 更新最后一个变量为初始状态
+			// set final variable as init state
 			Vars[nbVal - 1].var_name[0] = '\0';
 			Vars[nbVal - 1].value[0] = '\0';
 			nbVal--;
 			return 0;
 		}
 	}
-//	perror("NO SUCH variable");
 	return -1; // 如果找不到变量
 } // unset local variable commande
 
@@ -211,7 +183,7 @@ void init_sharedMemeory(){
 	}
 
 	pthread_rwlock_init(&shared->lock, NULL);
-}
+} // init shared memory
 
 int set_env_var(char *var_name, char *var_value) {
 	int i;
@@ -219,8 +191,7 @@ int set_env_var(char *var_name, char *var_value) {
 	for (i = 0; i < MAXENVVAR; ++i) {
 		if (strcmp(shared->eVars[i].var_name,var_name) == 0){
 			strcpy(shared->eVars[i].value,var_value);
-//			printf("set env var %s = %s",var_name,var_name);
-			pthread_rwlock_unlock(&shared->lock);
+			pthread_rwlock_unlock(&shared->lock); // protect shared memory
 
 			return 0;
 		}
@@ -231,14 +202,13 @@ int set_env_var(char *var_name, char *var_value) {
 			strcpy(shared->eVars[i].value, var_value);
 			pthread_rwlock_unlock(&shared->lock);
 
-//			printf("set env var %s = %s",var_name,var_name);
 			return 0;
 		}
 	}
 	fprintf(stderr,"NO more space avaliable");
 	pthread_rwlock_unlock(&shared->lock);
 	return -1;
-}
+} // set env variable
 
 int unset_env_var(char *var_name){
 	int i;
@@ -249,9 +219,8 @@ int unset_env_var(char *var_name){
 			return 0;
 		}
 	}
-//	fprintf(stderr,"NO such variable");
 	return -1;
-}
+} // unset env variable
 
 char *get_env_var(char *var_name){
 	int i;
@@ -264,14 +233,14 @@ char *get_env_var(char *var_name){
 	}
 	pthread_rwlock_unlock(&shared->lock);
 	return NULL;
-}
+} // get env variable
 
 void clean_env_variable(){
 	if (shared->eVars != NULL){
 		shmdt(shared->eVars);
 		shmctl(shmid,IPC_RMID,NULL);
 	}
-}
+} // delete shared memory
 
 void clean_local_variable(){
 	int i;
@@ -279,4 +248,4 @@ void clean_local_variable(){
 		Vars[i].var_name[0] = '\0';
 		Vars[i].value[0] = '\0';
 	}
-}
+} // delete local memory

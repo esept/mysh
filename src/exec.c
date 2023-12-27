@@ -29,7 +29,7 @@ int exec_cmd(char * cmd[]){
 	}
 //	getError("exec");
 	return -1;
-}
+} // exec command with exec
 
 int command_cd(char *path){
 	if (path == NULL){
@@ -40,7 +40,7 @@ int command_cd(char *path){
 		return -1;
 	};
 	return 0;
-}
+} // run command change_dir
 
 int cmd_pipe(char *argv[], int argc) {
 	int num_pipes = 0;
@@ -111,7 +111,7 @@ int cmd_pipe(char *argv[], int argc) {
 	}
 
 	return 0;
-} // without builtin function
+} // command pipe without builtin function
 
 int cmd_pipe2(char *argv[], int argc) {
 	int num_pipes = 0;
@@ -190,14 +190,14 @@ int cmd_pipe2(char *argv[], int argc) {
 	}
 
 	return 0;
-}
+} // command pipe with builtin function
 
 int cmd_redi(char *argv[], int argc) {
 	int save_stdout = dup(STDOUT_FILENO);
 	int save_stderr = dup(STDERR_FILENO);
 	int save_stdin = dup(STDIN_FILENO);
 	int fd;
-	char *new_argv[argc]; // 创建新的参数数组
+	char *new_argv[argc];
 	int new_argc = 0;
 
 	for (int i = 0; i < argc; i++) {
@@ -205,7 +205,7 @@ int cmd_redi(char *argv[], int argc) {
 			fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 			dup2(fd, STDOUT_FILENO);
 			close(fd);
-			i++; // 跳过文件名
+			i++;
 		} else if (strcmp(argv[i], ">>") == 0) {
 			fd = open(argv[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
 			dup2(fd, STDOUT_FILENO);
@@ -246,26 +246,27 @@ int cmd_redi(char *argv[], int argc) {
 
 	pid_t pid = fork();
 	if (pid == 0) {
-		// 子进程
+		// child
 		execvp(new_argv[0], new_argv);
 		perror("execvp");
 		exit(EXIT_FAILURE);
 	} else if (pid > 0) {
-		// 父进程
+		// parent
 		int status;
 		waitpid(pid, &status, 0);
 	} else {
+		// error
 		perror("fork");
 		return -1;
 	}
 
-	// 恢复原始的标准输出和标准错误
+	// reset standard output
 	dup2(save_stdout, STDOUT_FILENO);
 	dup2(save_stderr, STDERR_FILENO);
-	dup2(save_stdin, STDIN_FILENO); // 恢复标准输入
+	dup2(save_stdin, STDIN_FILENO); // reset standard input
 	close(save_stdout);
 	close(save_stderr);
 	close(save_stdin);
 	return 0;
-} // redirect
+} // commmand redirect
 

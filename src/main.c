@@ -20,25 +20,23 @@ pid_t globalPID = 0;
 
 void signalHandler(int sig){
 	if (sig == SIGINT){
-		// 检查当前运行进程
-		if(globalPID != 0){//当前进程存在
+		if(globalPID != 0){
 			kill(globalPID,SIGINT);
 		}else{
 			printf("none\n");
 			return;
 		}
 	}
-}
+} // change signal function
 
 int main() {
 	char thiscmd[CMDLEN];
 	char cwd[SIZE];
 
 	init_variable();
-//	init_env_variable();
 	init_sharedMemeory();
 	for (;;) {
-//		signal(SIGINT,signalHandler);
+		signal(SIGINT,signalHandler);
 		if (getcwd(cwd, sizeof(cwd)) == NULL) getError("getcwd");
 		printf("%s -> ",cwd);
 		if (fgets(thiscmd, CMDLEN - 1, stdin) == NULL) {
@@ -48,5 +46,4 @@ int main() {
 		size_t len = strlen(thiscmd);
 		preprocess(thiscmd, len);
 	}
-
 }

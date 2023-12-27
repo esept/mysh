@@ -34,13 +34,13 @@ int command_myls(char *path[], int length) {
 		list_files("./", all, Rec);
 	} else {
 		for (int i = 1; i < length; i++) {
-			if (test_search(path[i]) == 0) { // 如果是路径
+			if (test_search(path[i]) == 0) {
 				list_files(path[i], all, Rec);
 			}
 		}
 	}
 	return 0;
-}
+} // preprocess command myls
 
 void get_stat(char *file_path,int is_all,int rec) {
 	int rt_stat;
@@ -102,7 +102,7 @@ void get_stat(char *file_path,int is_all,int rec) {
 	printf(" %lu \t%s \t%s \t%lld \t%s", (unsigned long)(&mystat)->st_nlink, pw->pw_name, gr->gr_name, (long long)(&mystat)->st_size, datestring);
 	printf("\t%s%s%s\n", color, filename, RESET_COLOR);
 
-}
+} // get + show all stat
 
 void list_files(char *the_path, int is_all, int Rec) {
 	DIR *mydir = opendir(the_path);
@@ -114,27 +114,27 @@ void list_files(char *the_path, int is_all, int Rec) {
 	struct dirent *files;
 	while ((files = readdir(mydir)) != NULL) {
 		if (!is_all && files->d_name[0] == '.') {
-			continue; // 跳过隐藏文件
+			continue; // dont show invisiable file
 		}
 
-		char s[CMDLEN]; // 路径长度
-		snprintf(s, sizeof(s), "%s/%s", the_path, files->d_name); // 正确构建路径
+		char s[CMDLEN];
+		snprintf(s, sizeof(s), "%s/%s", the_path, files->d_name); // get the real path
 
-		get_stat(s, is_all, Rec); // 获取文件状态
+		get_stat(s, is_all, Rec); // get states of file/folders
 	}
 
 	if (closedir(mydir) == -1) {
 		perror("closedir");
 	}
-}
+} // get all files / folders
 
 int test_search(char *option) {
 	if (strcmp(option, "-R") == 0) {
-		return 1; // 仅-R
+		return 1;
 	} else if (strcmp(option, "-a") == 0) {
-		return 2; // 仅-a
+		return 2;
 	} else if (strcmp(option, "-aR") == 0 || strcmp(option, "-Ra") == 0) {
-		return 3; // -a 和 -R
+		return 3;
 	}
-	return 0; // 无效选项或路径
-}
+	return 0;
+} // test use -a or -R
