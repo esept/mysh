@@ -5,8 +5,6 @@
 #ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
 #define EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_
 
-int status;
-
 
 int getop(char **input, int a, int len);
 void preprocess(char *input,int length);

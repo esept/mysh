@@ -34,7 +34,7 @@ void preprocess(char *input, int length) {
 	int logop[CMDLEN];
 	int posop;
 	int last_status = 0;
-	int status = 0;
+//	int status = 0;
 
 	while ((cmd_seg = strtok_r(rest_cmd, ";", &rest_cmd))) { // split semicolon
 		i = 0;
@@ -59,14 +59,14 @@ void preprocess(char *input, int length) {
 						(strcmp(argv[logop[j - 1]], "||") == 0 && last_status != 0)) { // split logic operator
 
 					last_status = process(argc, argv, start, end); // exec command with numbre of position
-					status = last_status;
+//					status = last_status;
 				}
 				start = end + 1;
 			}
 		} else {
 			// dont have logop
 			last_status = process(argc, argv, 0, argc);
-			status = last_status;
+//			status = last_status;
 		}
 	}
 } // preprocess command
@@ -143,13 +143,27 @@ int process(int argc, char *argv[], int start, int end) {
 		clean_env_variable();
 		clean_local_variable();
 		exit(EXIT_SUCCESS);
-	} else if(strcmp(cmd_argv[0],"status") == 0){ // show final status
-		printf("last status = %d",status);
-		return_status = 1;
-	}else{ // run command
+	} else{ // run command
 		return_status = exec_cmd(cmd_argv);
 	}
 	return return_status;
+
+//	if (strcmp(cmd_argv[0],"cd") == 0){ // changer direct
+//		return_status = command_cd(cmd_argv[1]);
+//	}else if(strcmp(cmd_argv[0],"myls") == 0){ // ls -l
+//		return_status = command_myls(cmd_argv,cmd_argc);
+//	}else if(strcmp(cmd_argv[0],"exit") == 0){ // exit
+//		clean_env_variable();
+//		clean_local_variable();
+//		exit(EXIT_SUCCESS);
+//	} else if(strcmp(cmd_argv[0],"status") == 0){ // show final status
+//		printf("last status = %d",status);
+//		return_status = 1;
+//	}else{ // run command
+//		return_status = exec_cmd(cmd_argv);
+//	}
+//	return return_status;
+
 }
 
 
@@ -218,7 +232,7 @@ int split_space(char *cmd, char *args[]) {
 
 int is_builtin_command(char *cmd) {
 //	printf("check builtin\n\n");
-	const char *builtin_commands[] = {"cd", "exit", "myls", "status", NULL};
+	const char *builtin_commands[] = {"cd", "exit", "myls", NULL};
 
 	for (int i = 0; builtin_commands[i] != NULL; i++) {
 		if (strcmp(cmd, builtin_commands[i]) == 0) {
@@ -235,9 +249,6 @@ int execute_builtin_command(char *argv[], int pipefds[], int cmd_index, int num_
 		exit(EXIT_SUCCESS);
 	} else if (strcmp(argv[0], "myls") == 0) {
 		return command_myls(argv, cmd_index);
-	} else if (strcmp(argv[0], "status") == 0) {
-		printf("last status = %d\n", status);
-		return 1;
 	}
 
 	return 0;
