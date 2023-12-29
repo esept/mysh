@@ -22,6 +22,9 @@ int nbVal = 0;
 int nbEnvVal = 0;
 int shmid;
 
+struct LocalVar Vars[MAXVAR];
+SharedMemory *shared;
+
 void init_variable() {
 	int i;
 	for (i = 0; i < MAXVAR; i++) {

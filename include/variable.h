@@ -20,7 +20,7 @@ typedef struct EnvVar{
 	char value[100];
 }EnvVar;
 
-struct LocalVar Vars[MAXVAR];
+//struct LocalVar Vars[MAXVAR];
 //EnvVar *eVars;
 
 typedef struct {
@@ -28,7 +28,13 @@ typedef struct {
 	EnvVar eVars[MAXENVVAR];
 } SharedMemory;
 
-SharedMemory *shared;
+//SharedMemory *shared;
+
+extern struct LocalVar Vars[MAXVAR];
+extern SharedMemory *shared;
+
+
+
 
 void init_variable();
 
