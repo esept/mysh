@@ -17,6 +17,6 @@ void split_logop(char *input);
 void split(char *input,int length);
 
 int is_builtin_command(char *cmd);
-execute_builtin_command(char *argv[], int pipefds[], int cmd_index, int num_pipes);
+int execute_builtin_command(char *argv[], int pipefds[], int cmd_index, int num_pipes);
 
 #endif //EDU_1S_C_PROJECT_MYSHELL_SRC_PREPRO_INPUT_H_

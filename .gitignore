@@ -2,8 +2,6 @@
 bin/
 output/
 obj/
-./test.md
-./test.m
 
 # Ignore editor-specific files
 .vscode/

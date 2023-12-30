@@ -2,6 +2,13 @@
 
 Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
 
+```bash
+$ ls
+1S-C-project-myshell-readme.md  bin  docs  include  Makefile  obj  README.md  run.sh  src  test_mysh.md
+chmod +x run.sh
+./run.sh
+```
+
 [Voir sur Github](https://github.com/esept/mysh/tree/main)
 
 [La suite des tests](./test_mysh.md)
@@ -163,3 +170,5 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
     bar+foo
     ∼>unset $a
     ```
+
+[LA SUITE DES TESTS](./test_mysh.md)
