@@ -38,7 +38,7 @@ void init_variable();
 int set_variable(int argc,char *argv[]);
 int use_variable(int argc,char *argv[]);
 
-
+char *replace_variable_references(char *value);
 int set_local_var(char *var_name,char *var_value);
 char * get_local_var(char *val_name);
 int unset_local_var(char *val_name);
