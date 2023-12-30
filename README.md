@@ -4,14 +4,23 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
 
 ```bash
 $ ls
-1S-C-project-myshell-readme.md  bin  docs  include  Makefile  obj  README.md  run.sh  src  test_mysh.md
-chmod +x run.sh
-./run.sh
+1S-C-project-myshell-readme.md  bin  docs  include  Makefile  obj  README.md  mysh  src  test_mysh.md
+chmod +x mysh
+./mysh
 ```
 
 [Voir sur Github](https://github.com/esept/mysh/tree/main)
 
-[La suite des tests](./test_mysh.md)
+[La suite des tests](./docs/test_mysh.md)
+
+
+| function               | file         | realisator |
+| ---------------------- | ------------ | ---------- |
+| myls                   | myls.c       | xu         |
+| signal (SIGINT)        | main.c       | xu         |
+| variable (env + local) | variable.c   | xu         |
+| redirect               | exec.h       | xu         |
+| logic operator & `;`   | prepro_input | xu         |
 
 ## Fonctionnalités
 
@@ -69,7 +78,7 @@ chmod +x run.sh
 
     ```bash
     mysh ~> ^C Do you really want to quit? [y/n] y
-    ./run.sh : ligne 4 : 38846 Processus arrêté      ./bin/exec
+    ./mysh : ligne 4 : 38846 Processus arrêté      ./bin/exec
     ```
 
 6. Code de retour d'un processus
@@ -81,7 +90,7 @@ chmod +x run.sh
     mysh ~> status
     No terminated process.
     mysh ~> ls
-    1S-C-project-myshell-readme.md  bin  docs  include  Makefile  obj  README.md  run.sh  src  test.m  test_mysh.md
+    1S-C-project-myshell-readme.md  bin  docs  include  Makefile  obj  README.md  mysh  src  test.m  test_mysh.md
     mysh ~> status
     `39706` terminé avec comme code de retour 0
     mysh ~> 
@@ -112,7 +121,7 @@ chmod +x run.sh
     .
     .
     root     39587 0.0   0.0   0        0        ?        I     12.29    00:00:00 (kworker/3:2)
-    trab     39666 0.0   0.0   12648    3840     ?        S     12.31    00:00:00 (run.sh)
+    trab     39666 0.0   0.0   12648    3840     ?        S     12.31    00:00:00 (mysh)
     trab     39669 0.0   0.0   2808     1792     ?        R     12.30    00:00:00 (exec)
     trab     39826 0.0   0.2   4258744  18128    ?        S     05.17    00:00:00 (cpptools-srv)
     ```
@@ -171,4 +180,8 @@ chmod +x run.sh
     ∼>unset $a
     ```
 
-[LA SUITE DES TESTS](./test_mysh.md)
+[LA SUITE DES TESTS](./docs/test_mysh.md)
+
+
+
+
