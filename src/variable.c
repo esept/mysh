@@ -33,6 +33,16 @@ void init_variable() {
 	}
 } // initial all local variable
 
+char *replace_variable_references(char *value) {
+
+	if (value[0] == '$') {
+		char *actual_value = get_local_var(value + 1); 
+		if (actual_value) {
+			return actual_value;
+		}
+	}
+	return value;
+}
 
 int set_variable(int argc, char *argv[]) {
 	int rt_value = 0;
@@ -42,8 +52,9 @@ int set_variable(int argc, char *argv[]) {
 			char *var_value;
 			char *var_name = strtok_r(argv[i + 1], "=", &var_value); // split `=`
 			if (var_name != NULL && var_value != NULL) {
+				var_value = replace_variable_references(var_value); // have $
 				rt_value = set_local_var(var_name, var_value);
-			} else{
+			} else {
 				perror("too few info");
 				rt_value = -1;
 			}
