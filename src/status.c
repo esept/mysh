@@ -53,7 +53,7 @@ int display_last_process_status()
 	if (cmd == NULL)
 	{
 		printf(VERT("No terminated process.\n"));
-		return;
+		return 0;
 	}
 
 
