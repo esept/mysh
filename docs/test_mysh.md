@@ -70,12 +70,3 @@ obj
 /Users/xuzy/Code/EDU-1S-C-project-myshell -> exit
 ➜  EDU-1S-C-project-myshell git:(2312) ✗ 
 ```
-
-| function               | file         | realisator |
-| ---------------------- | ------------ | ---------- |
-| myls                   | myls.c       | xu         |
-| signal (SIGINT)        | main.c       | xu         |
-| variable (env + local) | variable.c   | xu         |
-| redirect (`|` + `>`)   | exec.h       | xu         |
-| `&&` ,`||`,`;`         | prepro_input | xu         |
-|                        |              |            |
