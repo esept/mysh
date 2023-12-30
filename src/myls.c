@@ -14,6 +14,7 @@
 #include <time.h>
 #include <sys/types.h>
 
+
 int command_myls(char *path[], int length) {
 	int all = 0, Rec = 0, i;
 	char *default_path = "./"; // 默认路径
@@ -21,31 +22,26 @@ int command_myls(char *path[], int length) {
 	// 首先处理所有选项
 	for (i = 1; i < length; i++) {
 		int res = test_search(path[i]);
-		if (res == 0) {
+		if (res == 1) {
 			Rec = 1;
-		} else if (res == 1) {
+		} else if (res == 2) {
 			all = 1;
-		} else if (res == 2 || res == 3) {
+		} else if (res == 3) {
 			all = 1;
 			Rec = 1;
 		}
 	}
-	printf("rec = %d , all = %d ",Rec,all);
-	// 然后处理所有非选项（即路径）
-	for (i = 1; i < length; i++) {
-		if (test_search(path[i]) == -1) { // 如果不是选项
-			default_path = path[i];
-			list_files(default_path, all, Rec);
+	if (length == 1 || (length == 2 && (all || Rec))) {
+		list_files("./", all, Rec);
+	} else {
+		for (int i = 1; i < length; i++) {
+			if (test_search(path[i]) == 0) {
+				list_files(path[i], all, Rec);
+			}
 		}
 	}
-
-	// 如果没有指定路径，则使用默认路径
-	if (length == 1 || (length == 2 && (all == 1 || Rec == 1))) {
-		list_files(default_path, all, Rec);
-	}
-	return 1;
-}
-
+	return 0;
+} // preprocess command myls
 
 void get_stat(char *file_path,int is_all,int rec) {
 	int rt_stat;
@@ -54,16 +50,16 @@ void get_stat(char *file_path,int is_all,int rec) {
 	if (rt_stat < 0){
 		printf("%s",file_path);
 		perror("lstat");
-		exit(EXIT_FAILURE);
+//		exit(EXIT_FAILURE);
+		return;
 	}
 	char filemod[11];
 	mode_t mod = (&mystat)->st_mode;
 
-	if (rec == 1 && S_ISDIR(mod)){
+	if (rec == 1 && S_ISDIR(mod)) {
 		char newpath[strlen(file_path)+2];
 		strcpy(newpath,file_path);
 		strcat(newpath,"/");
-//		printf("newpath = %s",newpath);
 		list_files(newpath,is_all,rec);
 	}
 
@@ -97,52 +93,54 @@ void get_stat(char *file_path,int is_all,int rec) {
 		color = EXECUTABLE_COLOR;
 	}
 
+	char *filename = strrchr(file_path, '/');
+	if (filename == NULL) {
+		filename = file_path;
+	} else {
+		filename++; // 跳过 '/'
+	}
+
 	printf(" %lu \t%s \t%s \t%lld \t%s", (unsigned long)(&mystat)->st_nlink, pw->pw_name, gr->gr_name, (long long)(&mystat)->st_size, datestring);
-	printf("\t%s%s%s\n", color, file_path, RESET_COLOR);
+	printf("\t%s%s%s\n", color, filename, RESET_COLOR);
 
-}
+} // get + show all stat
 
-void list_files(char *the_path,int is_all,int Rec) {
-	DIR *mydir;
-
-	mydir = opendir(the_path);
+void list_files(char *the_path, int is_all, int Rec) {
+	DIR *mydir = opendir(the_path);
 	if (mydir == NULL) {
 		perror("opendir");
 		exit(EXIT_FAILURE);
 	}
+
 	struct dirent *files;
-	for (;;) {
-		files = readdir(mydir);
-		if (files == NULL) {
-			break;
+	while ((files = readdir(mydir)) != NULL) {
+		if (!is_all && files->d_name[0] == '.') {
+			continue; // dont show invisiable file
 		}
-		// -a 选项
-		if (is_all == 0){
-			if (strcmp(files->d_name, ".") == 0 || strcmp(files->d_name, "..") == 0 || files->d_name[0] == '.') {
-				continue;
-			}
-		}
-		char s[strlen(the_path) + strlen(files->d_name) + 1];
-		strcpy(s, the_path);
-		strcat(s,files->d_name);
-		get_stat(s,is_all,Rec);
+
+		char s[CMDLEN];
+		snprintf(s, sizeof(s), "%s/%s", the_path, files->d_name); // get the real path
+
+		get_stat(s, is_all, Rec); // get states of file/folders
 	}
+
 	if (closedir(mydir) == -1) {
 		perror("closedir");
 	}
-}
+} // get all files / folders
 
-
-int test_search(char * options){
-	char * target[4] = {"-R","-a","-aR","-Ra"};
-	int res;
-	int num = -1;
-	for (int i = 0;i < 4;i++){
-		res = strcmp(options,target[i]);
-		if (res == 0){
-			num = i;
-			break;
-		}
+int test_search(char *option) {
+	if (strcmp(option, "-R") == 0) {
+		return 1;
+	} else if (strcmp(option, "-a") == 0) {
+		return 2;
+	} else if (strcmp(option, "-aR") == 0 || strcmp(option, "-Ra") == 0) {
+		return 3;
 	}
+<<<<<<< HEAD
 	return num;
 }
+=======
+	return 0;
+} // test use -a or -R
+>>>>>>> origin/2312

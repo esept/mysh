@@ -15,6 +15,7 @@
 #include "../include/prepro_input.h"
 #include "../include/main.h"
 #include "status.h"
+#include "../include/variable.h"
 
 pid_t globalPID = 0;
 pid_t bg_processes[MAX_BG_PROCESSES];
@@ -53,6 +54,8 @@ int main() {
 	char thiscmd[CMDLEN];
 	char cwd[SIZE];
 
+	init_variable();
+	init_sharedMemeory();
 	for (;;) {
 		if (getcwd(cwd, sizeof(cwd)) == NULL) getError("getcwd");
 		printf("%s ~> ",cwd);
@@ -62,7 +65,6 @@ int main() {
 		}
 		size_t len = strlen(thiscmd);
 		preprocess(thiscmd, len);
-		// split(thiscmd,len);
 	}
 
 	return 0;
