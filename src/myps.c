@@ -101,7 +101,7 @@ void get_time(unsigned long utime, unsigned long stime, unsigned long *hours, un
     *seconds = total_time % 60;
 }
 
-void command_myps()
+int command_myps()
 {
     DIR *dir;
     struct dirent *entry;
@@ -177,4 +177,5 @@ void command_myps()
     }
 
     closedir(dir);
+    return 0;
 }

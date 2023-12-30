@@ -5,7 +5,6 @@
 #ifndef EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_
 #define EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_
 
-<<<<<<< HEAD
 #include <stdio.h>
 
 static long clk_tck;
@@ -96,10 +95,8 @@ void get_time(unsigned long utime, unsigned long stime, unsigned long *hours, un
 
 /**
  * Retrieves and prints the information of all running processes.
+ * @return 0 if successful.
  */
-void command_myps();
-=======
-//void command_myps();
->>>>>>> origin/2312
+int command_myps();
 
 #endif // EDU_1S_C_PROJECT_MYSHELL_SRC_MYPS_H_

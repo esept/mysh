@@ -24,6 +24,7 @@ typedef enum
     FSCANF_ERROR,
     OPENDIR_ERROR,
     STAT_ERROR,
+    GLOB_ERROR,
     UNKNOW_ERROR,
 
 } ErrorCode;

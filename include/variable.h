@@ -33,9 +33,6 @@ typedef struct {
 extern struct LocalVar Vars[MAXVAR];
 extern SharedMemory *shared;
 
-
-
-
 void init_variable();
 
 int set_variable(int argc,char *argv[]);
@@ -54,4 +51,5 @@ int unset_env_var(char *var_name);
 char *get_env_var(char *var_name);
 void clean_env_variable();
 void clean_local_variable();
+
 #endif //EDU_1S_C_PROJECT_MYSHELL_SRC_VARIABLE_H_

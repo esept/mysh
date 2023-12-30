@@ -27,7 +27,6 @@ int getop(char **input, int a, int len) {
 	return 0;
 } // get position of logic operators
 
-
 void preprocess(char *input, int length) {
 	int i;
 	if (length > 0 && input[length - 1] == '\n') {
@@ -40,7 +39,6 @@ void preprocess(char *input, int length) {
 	int logop[CMDLEN];
 	int posop;
 	int last_status = 0;
-//	int status = 0;
 
 	while ((cmd_seg = strtok_r(rest_cmd, ";", &rest_cmd))) { // split semicolon
 		i = 0;
@@ -65,18 +63,15 @@ void preprocess(char *input, int length) {
 						(strcmp(argv[logop[j - 1]], "||") == 0 && last_status != 0)) { // split logic operator
 
 					last_status = process(argc, argv, start, end); // exec command with numbre of position
-//					status = last_status;
 				}
 				start = end + 1;
 			}
 		} else {
 			// dont have logop
 			last_status = process(argc, argv, 0, argc);
-//			status = last_status;
 		}
 	}
 } // preprocess command
-
 
 int process(int argc, char *argv[], int start, int end) {
 	char *cmd_argv[CMDLEN];
@@ -91,7 +86,6 @@ int process(int argc, char *argv[], int start, int end) {
 	}
 	cmd_argv[cmd_argc] = NULL;
 
-
 	// if command use pipe
 	for (i = 0; i < cmd_argc; ++i) {
 		if (strcmp(cmd_argv[i],"|") == 0){ // pipe |
@@ -100,7 +94,6 @@ int process(int argc, char *argv[], int start, int end) {
 			return return_status;
 		}
 	}
-
 
 	// if command set/unset variables
 	char *variable_tab[] = {
@@ -114,7 +107,6 @@ int process(int argc, char *argv[], int start, int end) {
 			}
 		}
 	}
-
 
 	// if command use variable
 	for (i = 0;  i<cmd_argc ; i++) {
@@ -145,6 +137,10 @@ int process(int argc, char *argv[], int start, int end) {
 		return_status = command_cd(cmd_argv[1]);
 	}else if(strcmp(cmd_argv[0],"myls") == 0){ // ls -l
 		return_status = command_myls(cmd_argv,cmd_argc);
+	}else if(strcmp(cmd_argv[0],"status") == 0){ // status
+		return_status = display_last_process_status();
+	}else if(strcmp(cmd_argv[0],"myps") == 0){ // ps aux
+		return_status = command_myps();
 	}else if(strcmp(cmd_argv[0],"exit") == 0){ // exit
 		clean_env_variable();
 		clean_local_variable();
@@ -153,26 +149,7 @@ int process(int argc, char *argv[], int start, int end) {
 		return_status = exec_cmd(cmd_argv);
 	}
 	return return_status;
-
-//	if (strcmp(cmd_argv[0],"cd") == 0){ // changer direct
-//		return_status = command_cd(cmd_argv[1]);
-//	}else if(strcmp(cmd_argv[0],"myls") == 0){ // ls -l
-//		return_status = command_myls(cmd_argv,cmd_argc);
-//	}else if(strcmp(cmd_argv[0],"exit") == 0){ // exit
-//		clean_env_variable();
-//		clean_local_variable();
-//		exit(EXIT_SUCCESS);
-//	} else if(strcmp(cmd_argv[0],"status") == 0){ // show final status
-//		printf("last status = %d",status);
-//		return_status = 1;
-//	}else{ // run command
-//		return_status = exec_cmd(cmd_argv);
-//	}
-//	return return_status;
-
 }
-
-
 
 int split_space(char *cmd, char *args[]) {
 	int i = 0, j = 0;
@@ -186,59 +163,9 @@ int split_space(char *cmd, char *args[]) {
 	return j;
 }
 
-
-// split space
-
-//void split_semicolon(char *input) {
-//	char *rest_line = input;
-//	char *cmd_seg;
-//	while ((cmd_seg = strtok_r(rest_line, ";", &rest_line))) {
-//		char *tabcmd[SIZE];
-////		split_space(cmd_seg, tabcmd);
-//		if (strcmp(tabcmd[0], "cd") == 0) {
-//			command_cd(tabcmd[1]);
-//			continue;
-//		} else if (strcmp(tabcmd[0], "exit") == 0) {
-//			exit(EXIT_SUCCESS);
-//		}
-//		printf("%s\n", cmd_seg);
-//	}
-//	printf("%s", cmd_seg);
-//}
-
-//void split(char *input, int length) {
-//	if (length > 0 && input[length - 1] == '\n') {
-//		input[length - 1] = '\0';
-//	}
-//	char *tabcmds[SIZE];
-//	int cmd_count = 0;
-//	// int last_status = 0;
-//	// int execute_next = 1;
-//	char *token = strtok(input, ";");
-//	while (token != NULL && cmd_count < SIZE) {
-//		tabcmds[cmd_count++] = token;
-//		token = strtok(NULL, ";");
-//	}
-//	for (int i = 0; i < cmd_count; ++i) {
-//		printf("%s\n", tabcmds[i]);
-//	}
-//	for (int i = 0; i < cmd_count; ++i) {
-//		char *rest = tabcmds[i];
-//		char *next = strstr(rest, "&&");
-//		char *next_or = strstr(rest, "||");
-//		if (next == NULL || (next_or != NULL && next_or < next)) {
-//			next = next_or;
-//		}
-//		int pos_rest = strlen(rest);
-//		int pos_next = strlen(next);
-//
-//	}
-//}
-
-
 int is_builtin_command(char *cmd) {
 //	printf("check builtin\n\n");
-	const char *builtin_commands[] = {"cd", "exit", "myls", NULL};
+	const char *builtin_commands[] = {"cd", "exit", "myls", "myps", "status", NULL};
 
 	for (int i = 0; builtin_commands[i] != NULL; i++) {
 		if (strcmp(cmd, builtin_commands[i]) == 0) {
@@ -259,7 +186,3 @@ int execute_builtin_command(char *argv[], int pipefds[], int cmd_index, int num_
 
 	return 0;
 } // exec builtin command
-
-
-
-

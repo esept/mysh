@@ -14,7 +14,6 @@
 #include <time.h>
 #include <sys/types.h>
 
-
 int command_myls(char *path[], int length) {
 	int all = 0, Rec = 0, i;
 	char *default_path = "./"; // 默认路径
@@ -137,10 +136,5 @@ int test_search(char *option) {
 	} else if (strcmp(option, "-aR") == 0 || strcmp(option, "-Ra") == 0) {
 		return 3;
 	}
-<<<<<<< HEAD
-	return num;
-}
-=======
 	return 0;
 } // test use -a or -R
->>>>>>> origin/2312

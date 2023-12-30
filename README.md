@@ -2,6 +2,10 @@
 
 Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
 
+[Voir sur Github](https://github.com/esept/mysh/tree/main)
+
+[La suite des tests](./test_mysh.md)
+
 ## Fonctionnalités
 
 1. Lancement de commandes
@@ -31,7 +35,22 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
     ∼> wc -l /etc/?????
     ```
 
-    NB: Les caractères « jokers » précédés d’un `\` ne sont pas à remplacer.
+    ex:
+
+    ```bash
+    mysh ~> wc -l /etc/?????
+    wc: /etc/avahi: est un dossier
+        0 /etc/avahi
+    wc: /etc/dconf: est un dossier
+        0 /etc/dconf
+        .
+        .
+        .
+    wc: /etc/rcS.d: est un dossier
+        0 /etc/rcS.d
+        3 /etc/vtrgb
+        123 total
+    ```
 
 4. Changer de répertoire
     Afin de pouvoir se ballader dans l’arborescence de fichiers, le shell dispose d'un `cd` interne.
@@ -41,10 +60,25 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
     - La commande interne `exit` (quitte sans tue les tâches de fonds);
     - Le `Ctrl c` qui demande confirmation et tue les tâches de fonds avant de quitter;
 
+    ```bash
+    mysh ~> ^C Do you really want to quit? [y/n] y
+    ./run.sh : ligne 4 : 38846 Processus arrêté      ./bin/exec
+    ```
+
 6. Code de retour d'un processus
     La commande interne status affiche pour le dernier processus `xxxx` exécuté en premier plan (foreground):
     - `xxxx` terminé avec comme code de retour `YYY` si le processus s’est terminé normalement;
     - `xxxx` terminé anormalement dans le cas d’une terminaison anormale (comme par exemple l’interruption via un `Ctrl c`);
+
+    ```bash
+    mysh ~> status
+    No terminated process.
+    mysh ~> ls
+    1S-C-project-myshell-readme.md  bin  docs  include  Makefile  obj  README.md  run.sh  src  test.m  test_mysh.md
+    mysh ~> status
+    `39706` terminé avec comme code de retour 0
+    mysh ~> 
+    ```
 
 7. Lister le contenu d'un répertoire
     Pour lister le contenu d'un répertoire, le shell utilise un programme nommé myls (équivalent de `ls -l`).
@@ -58,7 +92,23 @@ Ce projet à pour but de concevoir un mini-shell (mysh), en Langage C.
     ```
 
 8. Afficher l’état des processus en cours
-    Pour afficher l'état des processus en cours, le shell utilise un programme myps (équivalent à `ps aux` avec affichage en couleur en fonction de l'état du processus)
+
+    Pour afficher l'état des processus en cours, le shell utilise un programme myps (équivalent à `ps aux` avec affichage en couleur en fonction de l'état du processus).
+
+    ```bash
+    /home/trab/Bureau/mysh ~> myps
+    USER     PID   %CPU  %MEM  VSZ      RSS      TTY      STAT  START    TIME     COMMAND 
+    root     1     0.0   0.2   166716   12072    ?        S     01.18    00:00:50 (systemd)
+    root     2     0.0   0.0   0        0        ?        S     12.29    00:00:00 (kthreadd)
+    root     3     0.0   0.0   0        0        ?        I     12.29    00:00:00 (rcu_gp)
+    .
+    .
+    .
+    root     39587 0.0   0.0   0        0        ?        I     12.29    00:00:00 (kworker/3:2)
+    trab     39666 0.0   0.0   12648    3840     ?        S     12.31    00:00:00 (run.sh)
+    trab     39669 0.0   0.0   2808     1792     ?        R     12.30    00:00:00 (exec)
+    trab     39826 0.0   0.2   4258744  18128    ?        S     05.17    00:00:00 (cpptools-srv)
+    ```
 
 9. Permettre l'usage du pipeline (`|`)
     Il permettra de rediriger la sortie standard du programme précédant le | vers l’entrée standard du programme suivant le |.

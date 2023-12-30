@@ -15,12 +15,9 @@
 
 #define SIZE 1024
 
-// #define ROUGE(m) "\033[01;31m"m"\033[0m"
-// #define VERT(m) "\033[01;32m"m"\033[0m"
-
 extern pid_t globalPID;
 
-#define MAX_BG_PROCESSES 50
+#define MAX_BG_PROCESSES 100
 extern pid_t bg_processes[MAX_BG_PROCESSES];
 extern int last_bg_process_index;
 
