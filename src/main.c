@@ -47,6 +47,8 @@ void signalHandler(int sig) {
         return;
     } 
     killBackgroundProcesses();
+    clean_env_variable();
+    clean_local_variable();
     exit(EXIT_SUCCESS);
 }
 
