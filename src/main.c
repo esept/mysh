@@ -21,7 +21,7 @@
 pid_t globalPID = 0;
 pid_t bg_processes[MAX_BG_PROCESSES];
 int last_bg_process_index = -1;
-// terminatedProcess lastTerminatedProcess = {0, 0, NULL};
+terminatedProcess lastTerminatedProcess = {0, 0, NULL};
 
 void killBackgroundProcesses() {
     for (int i = 0; i <= last_bg_process_index; i++) {

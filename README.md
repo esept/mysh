@@ -13,7 +13,6 @@ chmod +x mysh
 
 [La suite des tests](./docs/test_mysh.md)
 
-
 | function               | file         | realisator |
 | ---------------------- | ------------ | ---------- |
 | myls                   | myls.c       | xu         |
@@ -21,6 +20,17 @@ chmod +x mysh
 | variable (env + local) | variable.c   | xu         |
 | redirect               | exec.h       | xu         |
 | logic operator & `;`   | prepro_input | xu         |
+| myps                   | myps.c       | Bernard    |
+| status                 | status.c     | Bernard    |
+| wildcards              | in exec.c    | Bernard    |
+| signal (suite)         | in main.c    | Bernard    |
+
+Xu avait débuté le projet d'au moins 10% avant que n'y prenne part.
+
+| members | % of work |
+| ------- | --------- |
+| Xu      | 60%       |
+| Bernard | 40%       |
 
 ## Fonctionnalités
 
@@ -182,6 +192,11 @@ chmod +x mysh
 
 [LA SUITE DES TESTS](./docs/test_mysh.md)
 
+## Anomalies / Non implémentées
 
+On a pas eu le temps d'implémenter quelques fonctionnalités:
 
-
+- Ctrl d --> infinite loop
+- myjobs
+- myfg
+- mybg

@@ -7,8 +7,6 @@
 #include "status.h"
 #include "error_handler.h"
 
-terminatedProcess lastTerminatedProcess = {0, 0, NULL};
-
 // in the parent of each process, we call (depending on the case):
 // waitpid(pid, &status, 0);
 // OR
