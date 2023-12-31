@@ -9,6 +9,8 @@ chmod +x mysh
 ./mysh
 ```
 
+[La vidéo](https://drive.google.com/file/d/11YxA0DOFH0yJBsS8oTgiCZeZPF8kfljN/view?usp=sharing)
+
 [Voir sur Github](https://github.com/esept/mysh/tree/main)
 
 [La suite des tests](./docs/test_mysh.md)
