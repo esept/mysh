@@ -52,7 +52,7 @@ int exec_cmd(char *cmd[]) {
 		getError("fork");
 	else if (pid == 0) {
 		// child
-		bg_processes[++last_bg_process_index] = getpid();
+		add_job(getpid(), cmd[0]);
 		regexIndex = getRegexIndex(cmd);
 		if (regexIndex != -1) {
 			// printf("regexIndex != -1 !\n");
@@ -100,7 +100,7 @@ int exec_cmd(char *cmd[]) {
 				getError("exec");
 		}
 	} else {
-		bg_processes[++last_bg_process_index] = getpid();
+		add_job(getpid(), cmd[0]);
 		globalPID = pid;
 		waitpid(pid, &status, 0);
 		set_last_terminated_process_status(status, pid, cmd[0]);
@@ -154,7 +154,7 @@ int cmd_pipe(char *argv[], int argc) {
 
 		pid = fork();
 		if (pid == 0) {
-			bg_processes[last_bg_process_index++] = getpid();
+			add_job(getpid(), "|");
 			// 子进程
 			// 如果不是第一个命令
 			if (start != 0) {
@@ -181,7 +181,7 @@ int cmd_pipe(char *argv[], int argc) {
 		j++;
 	}
 
-	bg_processes[last_bg_process_index++] = getpid();
+	add_job(getpid(), "|");
 
 	// 父进程关闭所有管道
 	for (int i = 0; i < 2 * num_pipes; i++) {
@@ -264,7 +264,7 @@ int cmd_pipe2(char *argv[], int argc) {
 		start = j + 1;
 		j++;
 	}
-	bg_processes[last_bg_process_index++] = getpid();
+	add_job(getpid(), "|");
 
 	// 父进程关闭所有管道
 	for (int i = 0; i < 2 * num_pipes; i++) {
@@ -338,16 +338,16 @@ int cmd_redi(char *argv[], int argc) {
 	pid_t pid = fork();
 	if (pid == 0) {
 		// child
-		bg_processes[last_bg_process_index++] = getpid();
+		add_job(getpid(), "redirection");
 		execvp(new_argv[0], new_argv);
 		perror("execvp");
 		exit(EXIT_FAILURE);
 	} else if (pid > 0) {
 		// parent
-		bg_processes[last_bg_process_index++] = getpid();
+		add_job(getpid(), "redirection");
 		int status;
 		waitpid(pid, &status, 0);
-		set_last_terminated_process_status(status, pid, "|");
+		set_last_terminated_process_status(status, pid, "redirection");
 	} else {
 		// error
 		perror("fork");

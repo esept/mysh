@@ -165,6 +165,15 @@ Xu avait débuté le projet d'au moins 10% avant que n'y prenne part.
 
 12. Commande myjobs
 
+    ```bash
+    mysh ~> myjobs
+    mysh ~> touch test.txt
+    mysh ~> cat test.txt
+    mysh ~> myjobs
+    [0] 19898 En cours myjobs
+    [1] 19898 En cours myjobs
+    ```
+
 13. Passer une commande de foreground à background et inversement
 
 14. Les variables
@@ -199,6 +208,5 @@ Xu avait débuté le projet d'au moins 10% avant que n'y prenne part.
 On a pas eu le temps d'implémenter quelques fonctionnalités:
 
 - Ctrl d --> infinite loop
-- myjobs
 - myfg
 - mybg

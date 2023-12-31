@@ -141,6 +141,8 @@ int process(int argc, char *argv[], int start, int end) {
 		return_status = display_last_process_status();
 	}else if(strcmp(cmd_argv[0],"myps") == 0){ // ps aux
 		return_status = command_myps();
+	}else if(strcmp(cmd_argv[0],"myjobs") == 0){ // myjobs
+		return_status = print_jobs();
 	}else if(strcmp(cmd_argv[0],"exit") == 0){ // exit
 		clean_env_variable();
 		clean_local_variable();

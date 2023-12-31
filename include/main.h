@@ -18,7 +18,19 @@
 extern pid_t globalPID;
 
 #define MAX_BG_PROCESSES 100
-extern pid_t bg_processes[MAX_BG_PROCESSES];
-extern int last_bg_process_index;
+
+typedef struct job {
+    int job_number;
+    pid_t pid;
+    char* status;
+    char* command;
+} job;
+
+extern job bg_jobs[MAX_BG_PROCESSES];
+extern int last_job_index;
+
+void add_job(pid_t pid, char* command);
+void update_jobs();
+int print_jobs();
 
 #endif //EDU_1S_C_PROJECT_MYSHELL_SRC_MAIN_H_

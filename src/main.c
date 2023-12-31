@@ -19,17 +19,18 @@
 #include "../include/variable.h"
 
 pid_t globalPID = 0;
-pid_t bg_processes[MAX_BG_PROCESSES];
-int last_bg_process_index = -1;
 terminatedProcess lastTerminatedProcess = {0, 0, NULL};
 
+int last_job_index = -1;
+job bg_jobs[MAX_BG_PROCESSES];
+
 void killBackgroundProcesses() {
-    for (int i = 0; i <= last_bg_process_index; i++) {
-        kill(bg_processes[i], SIGKILL);
+    for (int i = 0; i <= last_job_index; i++) {
+        kill(bg_jobs[i].pid, SIGKILL);
     }
 }
 
-// To track all processes, each new process --> bg_processes[last_bg_process_index++] = getpid();
+// To track all processes, each new process --> add_job
 /**
  * @brief Kill all background processes before quit
  * @param sig signal number
@@ -50,6 +51,35 @@ void signalHandler(int sig) {
     clean_env_variable();
     clean_local_variable();
     exit(EXIT_SUCCESS);
+}
+
+void add_job(pid_t pid, char* command) {
+    last_job_index++;
+    bg_jobs[last_job_index].job_number = last_job_index;
+    bg_jobs[last_job_index].pid = pid;
+    bg_jobs[last_job_index].status = "En cours";
+    bg_jobs[last_job_index].command = command;
+}
+
+void update_jobs() {
+    for (int i = 0; i < last_job_index; i++) {
+        int status;
+        pid_t result = waitpid(bg_jobs[i].pid, &status, WNOHANG);
+        if (result == 0) {
+            bg_jobs[i].status = "En cours";
+        } else if (result == bg_jobs[i].pid) {
+            bg_jobs[i].status = "Stoppé";
+        }
+    }
+}
+
+int print_jobs() {
+    update_jobs();
+    for (int i = 0; i < last_job_index; i++) {
+        printf("[%d] %d %s %s\n", bg_jobs[i].job_number, bg_jobs[i].pid, bg_jobs[i].status, bg_jobs[i].command);
+    }
+
+    return 0;
 }
 
 int main() {
